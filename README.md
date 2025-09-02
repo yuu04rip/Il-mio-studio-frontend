@@ -36,22 +36,26 @@ git checkout -b feature/nome-feature-tuo-nome
 
 ### 4. Apri una Pull Request (PR) quando hai finito
 
-- Vai su GitHub e crea una PR dalla tua branch verso `main`.
-- Scrivi nella PR cosa hai fatto (feature, fix, ecc).
-- L’admin (yuu04rip) controlla la PR, può chiedere modifiche oppure approvare e fare il merge.
+- **Consiglio:** Potete aprire la pull request direttamente da IntelliJ IDEA.
+    - Dopo aver fatto il push della vostra branch, cliccate su “Create Pull Request” che appare in IntelliJ.
+    - Oppure andate su **Git → GitHub → Create Pull Request**.
+    - Selezionate la vostra branch come “compare” e `main` come “base”.
+    - Scrivete titolo e descrizione della PR.
+    - Confermate per inviare la PR.
+- L’admin (yuu04rip) controllerà la PR, può chiedere modifiche oppure approvare e fare il merge.
 
 ---
 
 ### 5. Solo l’admin può fare merge su `main`
 
 - Nessuno deve mergiare su `main` senza approvazione dell’admin.
-- In caso di modifiche richieste, aggiorna la tua branch e la PR si aggiorna automaticamente.
+- In caso di modifiche richieste, aggiornate la vostra branch e la PR si aggiorna automaticamente.
 
 ---
 
 ### 6. Ripeti per ogni nuova funzionalità
 
-- Dopo il merge, crea una nuova branch per la prossima feature.
+- Dopo il merge, create una nuova branch per la prossima feature.
 - Il flusso rimane sempre uguale.
 
 ---
@@ -62,18 +66,6 @@ git checkout -b feature/nome-feature-tuo-nome
 - PR obbligatorie per ogni modifica importante.
 - L’admin revisiona tutto prima del merge.
 - Se hai dubbi, chiedi prima!
-
----
-
-## 📬 Esempio di messaggio da inviare al team
-
-> Ciao ragazzi!  
-> Per lavorare insieme sulla frontend, ognuno di voi deve:
-> 1. Fare una branch propria (`feature/…`).
-> 2. Lavorarci sopra e fare commit.
-> 3. Aprire una PR verso `main` quando avete finito.
-> 4. Io controllerò tutto prima del merge!
-> In caso di domande o problemi, scrivetemi pure.
 
 ---
 
