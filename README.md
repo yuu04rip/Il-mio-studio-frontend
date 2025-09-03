@@ -1,12 +1,12 @@
-# invest-app-frontend
+# Il-mio-studio-frontend
 
 ## 🛠️ Flusso di lavoro per collaborare in team
 
 ### 1. Clona la repository
 
 ```bash
-git clone https://github.com/yuu04rip/invest-app-frontend.git
-cd invest-app-frontend
+git clone https://github.com/yuu04rip/Il-mio-studio-frontend.git
+cd Il-mio-studio-frontend
 ```
 
 ---
