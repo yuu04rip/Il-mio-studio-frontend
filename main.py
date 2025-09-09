@@ -1,15 +1,15 @@
 from nicegui import ui
 
 
-from app.pages.account import account_page
-from app.pages.account_email import cambia_email_page
-from app.pages.account_mostra import mostra_dati_account_page
-from app.pages.account_password import cambia_password_page
+from app.pages.account.account import account_page
+from app.pages.account.account_email import cambia_email_page
+from app.pages.account.account_mostra import mostra_dati_account_page
+from app.pages.account.account_password import cambia_password_page
 from app.pages.auth import login_page, register_page, change_password_page
 from app.pages.documentazione import documentazione_page
 from app.pages.home import home_cliente, home_dipendente, home_notaio
 from app.pages.servizi import servizi_page
-from app.pages.logout import logout_page
+from app.pages.account.logout import logout_page
 
 ui.page('/')(login_page)
 ui.page('/register')(register_page)
