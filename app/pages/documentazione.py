@@ -2,11 +2,13 @@ from nicegui import ui
 from app.api.api import api_session
 from app.components.components import header
 
-API_BASE_URL = "http://localhost:8000"  # Cambia se il backend è su un'altra porta/ip
+API_BASE_URL = "http://localhost:8000"  # Aggiorna se il backend è su un altro indirizzo
 
 TIPI_DOCUMENTO = [
     {"label": "Carta d'identità", "value": "carta_identita", "icon": "badge"},
     {"label": "Passaporto", "value": "passaporto", "icon": "flight"},
+    {"label": "Tessera sanitaria", "value": "tessera_sanitaria", "icon": "medical_information"},
+    {"label": "Patente", "value": "patente", "icon": "directions_car"},
 ]
 
 def documentazione_page():
@@ -18,12 +20,10 @@ def documentazione_page():
         return
 
     with ui.card().classes('q-pa-xl q-mt-xl q-mx-auto shadow-5').style('max-width:640px;background:#fafdff;'):
-        # Titolo
         ui.label('Gestisci i tuoi documenti personali').classes('text-h5 q-mb-xl').style(
             'background:#1976d2;color:white;border-radius:2em;padding:.6em 2.5em;display:block;text-align:center;font-weight:600;letter-spacing:0.04em;'
         )
 
-        # Upload area
         with ui.row().classes('q-mb-lg').style('justify-content:center;'):
             selected_tipo = ui.select(
                 options={d["value"]: d["label"] for d in TIPI_DOCUMENTO},
@@ -37,7 +37,6 @@ def documentazione_page():
 
         ui.separator().classes('q-my-lg')
 
-        # Lista documenti
         doc_list = ui.column().classes('full-width').style('gap:20px;')
 
         def after_upload(success=True):
@@ -52,6 +51,8 @@ def documentazione_page():
             res = api_session.get(f'/documentazione/visualizza/{cliente_id}')
             if res.status_code == 200:
                 docs = res.json()
+                # Filtra solo i documenti non eliminati se il backend usa soft delete
+                docs = [doc for doc in docs if not doc.get("is_deleted", False)]
                 if docs:
                     for doc in docs:
                         tipo_label = next((d["label"] for d in TIPI_DOCUMENTO if d["value"] == doc["tipo"]), doc["tipo"])
@@ -61,13 +62,10 @@ def documentazione_page():
                                     'background:#f4f7fb;border-radius:1.5em;min-height:108px;padding:1.5em 2em;box-shadow:0 2px 14px 0 #0001;display:flex;align-items:center;'
                             ):
                                 with ui.row().classes('items-center').style('width:100%;'):
-                                    # Icona tipo documento
                                     ui.icon(tipo_icon).style('font-size:2.3em;color:#1976d2;margin-right:20px;')
-                                    # Dati testuali
-                                    with ui.column().classes('').style('flex:1;text-align:left;gap:0;'):
+                                    with ui.column().style('flex:1;text-align:left;gap:0;'):
                                         ui.label(tipo_label).classes('text-body1').style('font-weight:700;font-size:1.18em;margin-bottom:3px;')
                                         ui.label(doc["filename"]).classes('text-blue-grey-7').style('font-size:1em;max-width:340px;overflow-x:auto;')
-                                    # Action buttons
                                     ext = str(doc["filename"]).split('.')[-1].lower()
                                     with ui.row().classes('items-center').style('gap:8px;'):
                                         if ext in ["pdf", "jpg", "jpeg", "png"]:
@@ -92,7 +90,6 @@ def documentazione_page():
 
         refresh_docs()
 
-    # --- Stili custom ---
     ui.add_head_html("""
     <style>
     .action-btn {

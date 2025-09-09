@@ -44,25 +44,31 @@ def login_page():
                                 return
                         try:
                             resp = api_session.post('/auth/login', data)
-                            if resp.status_code == 200:
-                                token = resp.json()['access_token']
-                                api_session.set_token(token)
-                                user_resp = api_session.get('/users/me')
-                                if user_resp.status_code == 200:
-                                    api_session.set_user(user_resp.json())
-                                    ruolo_utente = api_session.user.get('ruolo', '').upper()
-                                    if ruolo_utente == 'CLIENTE':
-                                        ui.navigate.to('/home_cliente')
-                                    elif ruolo_utente == 'DIPENDENTE':
-                                        ui.navigate.to('/home_dipendente')
-                                    elif ruolo_utente == 'NOTAIO':
-                                        ui.navigate.to('/home_notaio')
-                                else:
-                                    msg.text = "Errore nel recupero dati utente."
-                            else:
-                                msg.text = resp.json().get('detail', 'Email o password non valide.')
                         except Exception:
                             msg.text = "Errore di connessione al server."
+                            return
+                        if resp.status_code == 200:
+                            token = resp.json()['access_token']
+                            api_session.set_token(token)
+                            user_resp = api_session.get('/users/me')
+                            if user_resp.status_code == 200:
+                                api_session.set_user(user_resp.json())
+                                ruolo_utente = api_session.user.get('ruolo', '').upper()
+                                if ruolo_utente == 'CLIENTE':
+                                    ui.navigate.to('/home_cliente')
+                                elif ruolo_utente == 'DIPENDENTE':
+                                    ui.navigate.to('/home_dipendente')
+                                elif ruolo_utente == 'NOTAIO':
+                                    ui.navigate.to('/home_notaio')
+                                else:
+                                    msg.text = "Ruolo utente non riconosciuto."
+                            else:
+                                msg.text = "Errore nel recupero dati utente."
+                        else:
+                            try:
+                                msg.text = resp.json().get('detail', 'Email o password non valide.')
+                            except Exception:
+                                msg.text = 'Email o password non valide.'
 
                     ui.button('Accedi', on_click=do_login).classes('auth-modern-btn q-mt-lg')
                     ui.button('Registrati', on_click=lambda: ui.navigate.to('/register')).props('flat').classes('auth-modern-link')

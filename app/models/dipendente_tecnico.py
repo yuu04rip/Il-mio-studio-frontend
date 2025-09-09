@@ -1,29 +1,23 @@
-from nicegui import ui
-from app.api.api import api_session
-from app.components.components import header
+class DipendenteTecnico:
+    def __init__(self, id, nome, cognome, email, numeroTelefonico, ruolo, servizi=None, is_deleted=False):
+        self.id = id
+        self.nome = nome
+        self.cognome = cognome
+        self.email = email
+        self.numeroTelefonico = numeroTelefonico
+        self.ruolo = ruolo
+        self.servizi = servizi or []  # lista di Servizio
+        self.is_deleted = is_deleted
 
-def add_dipendente_page():
-    header("Aggiungi Dipendente")
-    nome = ui.input('Nome')
-    cognome = ui.input('Cognome')
-    email = ui.input('Email')
-    numero = ui.input('Numero telefonico')
-    password = ui.input('Password', password=True)
-    ruolo = ui.select(['DIPENDENTE', 'ASSISTENTE', 'CONTABILE'], label='Ruolo')
-    msg = ui.label()
-    def do_add():
-        data = {
-            'nome': nome.value,
-            'cognome': cognome.value,
-            'email': email.value,
-            'numeroTelefonico': int(numero.value),
-            'password': password.value,
-            'ruolo': ruolo.value,
-        }
-        resp = api_session.post('/dipendenti/aggiungi', data)
-        if resp.status_code == 200:
-            msg.text = "Dipendente aggiunto!"
-        else:
-            msg.text = resp.json().get('detail','Errore aggiunta dipendente')
-    ui.button('Aggiungi', on_click=do_add).classes('q-mt-lg')
-    ui.button('Torna', on_click=lambda: ui.open('/home_notaio')).classes('q-mt-md')
+    @classmethod
+    def from_dict(cls, d):
+        return cls(
+            id=d.get("id"),
+            nome=d.get("nome"),
+            cognome=d.get("cognome"),
+            email=d.get("email"),
+            numeroTelefonico=d.get("numeroTelefonico"),
+            ruolo=d.get("ruolo"),
+            servizi=d.get("servizi", []),
+            is_deleted=d.get("is_deleted", False),
+        )

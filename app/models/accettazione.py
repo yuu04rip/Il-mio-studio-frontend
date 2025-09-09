@@ -1,24 +1,17 @@
-from nicegui import ui
-from app.api.api import api_session
-from app.components.components import header
+class Accettazione:
+    def __init__(self, id, servizio_id, dipendente_id, stato, data_accettazione=None):
+        self.id = id
+        self.servizio_id = servizio_id
+        self.dipendente_id = dipendente_id
+        self.stato = stato  # es. "IN_ATTESA", "ACCETTATO", "RIFIUTATO"
+        self.data_accettazione = data_accettazione
 
-def accettazione_servizi_page():
-    header("Accettazione Servizi")
-    res = api_session.get('/servizi/da_accettare')
-    if res.status_code == 200:
-        servizi = res.json()
-        for servizio in servizi:
-            with ui.card().classes('q-mb-md'):
-                ui.label(f"Servizio: {servizio['tipo']}")
-                ui.label(f"Cliente: {servizio['cliente_nome']}")
-                ui.button('Accetta', on_click=lambda s=servizio: accetta_servizio(s['id'])).props('color=positive')
-    else:
-        ui.label("Nessun servizio da accettare.")
-
-def accetta_servizio(servizio_id):
-    res = api_session.post(f"/servizi/{servizio_id}/accetta", {})
-    if res.status_code == 200:
-        ui.notify("Servizio accettato!")
-        ui.open('/accettazione')
-    else:
-        ui.notify("Errore accettazione servizio.")
+    @classmethod
+    def from_dict(cls, d):
+        return cls(
+            id=d.get("id"),
+            servizio_id=d.get("servizio_id"),
+            dipendente_id=d.get("dipendente_id"),
+            stato=d.get("stato"),
+            data_accettazione=d.get("data_accettazione"),
+        )

@@ -1,19 +1,16 @@
 from nicegui import ui
 
 def account_page():
-    # Sfondo chiaro (opzionale: puoi metterlo anche fuori dalla card se vuoi tutto bianco)
     with ui.column().classes('items-center q-mt-xl'):
         with ui.card().classes('glass-card shadow-7').style('max-width:440px;min-width:340px;padding:54px 0 44px 0;'):
-            # Titolo elegante
             ui.label('Area personale').classes('text-h5 glass-title').style(
                 'font-weight:700;font-size:2em;letter-spacing:0.04em;margin-bottom:1.7em;'
             )
-            # Bottoni azione con icone Material
             actions = [
                 ('account_circle', 'Mostra dati account', '/account/mostra'),
-                ('edit',           'Modifica dati anagrafici', '/account/modifica'),
                 ('mail',           'Cambia email', '/account/email'),
                 ('vpn_key',        'Modifica password', '/account/password'),
+                ('logout',         'Logout', '/logout'),
             ]
             for icon, label, path in actions:
                 with ui.button(on_click=lambda p=path: ui.navigate.to(p)).classes('glass-btn full-width'):
