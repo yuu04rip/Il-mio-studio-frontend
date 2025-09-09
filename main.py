@@ -1,4 +1,8 @@
-from nicegui import ui
+from nicegui import app, ui
+
+# Serve la cartella static, dovunque essa sia!
+import os
+app.add_static_files('/static', os.path.join(os.path.dirname(__file__), 'static'))
 
 
 from app.pages.account.account import account_page
@@ -10,6 +14,7 @@ from app.pages.documentazione import documentazione_page
 from app.pages.home import home_cliente, home_dipendente, home_notaio
 from app.pages.servizi import servizi_page
 from app.pages.account.logout import logout_page
+from app.pages.pagamento import pagamento_page
 
 ui.page('/')(login_page)
 ui.page('/register')(register_page)
@@ -23,7 +28,7 @@ ui.page('/account/password')(cambia_password_page)
 ui.page('/logout')(logout_page)
 ui.page('/documentazione')(documentazione_page)
 ui.page('/servizi')(servizi_page)
-
+ui.page('/pagamento')(pagamento_page)
 
 ui.page('/account')(account_page)
 
