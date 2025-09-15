@@ -18,7 +18,7 @@ def servizi_page():
 
         servizi = []
         # Chiamata API per recuperare servizi dell'utente autenticato
-        res = api_session.get(f'/servizi?cliente_id={cliente_id}')
+        res = api_session.get(f'/studio/servizi?cliente_id={cliente_id}')
         if res.status_code == 200:
             servizi = [Servizio.from_dict(s) for s in res.json()]
         else:

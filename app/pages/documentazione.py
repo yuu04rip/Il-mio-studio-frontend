@@ -48,7 +48,7 @@ def documentazione_page():
 
         def refresh_docs():
             doc_list.clear()
-            res = api_session.get(f'/documentazione/visualizza/{cliente_id}')
+            res = api_session.get(f'/studio/documenti/visualizza/{cliente_id}')
             if res.status_code == 200:
                 docs = res.json()
                 # Filtra solo i documenti non eliminati se il backend usa soft delete
@@ -114,7 +114,7 @@ def upload_documento(event, cliente_id, tipo, callback):
         callback(False)
         return
     import requests
-    url = API_BASE_URL + '/documentazione/carica'
+    url = API_BASE_URL + '/studio/documenti/carica'
     headers = api_session.get_headers() if hasattr(api_session, 'get_headers') else {}
     files = {'file': (event.name, event.content, event.type)}
     data = {'cliente_id': str(cliente_id), 'tipo': tipo}
@@ -135,7 +135,7 @@ def visualizza_documento(doc_id):
 def sostituisci_documento(doc_id, refresh_callback):
     def on_upload(event):
         import requests
-        url = API_BASE_URL + f'/documentazione/sostituisci/{doc_id}'
+        url = API_BASE_URL + f'/studio/documenti/sostituisci/{doc_id}'
         headers = api_session.get_headers() if hasattr(api_session, 'get_headers') else {}
         files = {'file': (event.name, event.content, event.type)}
         try:

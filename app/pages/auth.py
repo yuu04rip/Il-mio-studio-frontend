@@ -42,6 +42,7 @@ def login_page():
                             except Exception:
                                 msg.text = "Codice notarile non valido."
                                 return
+                        data['ruolo'] = selected_ruolo
                         try:
                             resp = api_session.post('/auth/login', data)
                         except Exception:
@@ -64,6 +65,8 @@ def login_page():
                                     msg.text = "Ruolo utente non riconosciuto."
                             else:
                                 msg.text = "Errore nel recupero dati utente."
+                        elif resp.status_code == 403:
+                                msg.text = "Hai messo il ruolo errato."
                         else:
                             try:
                                 msg.text = resp.json().get('detail', 'Email o password non valide.')
