@@ -4,7 +4,6 @@ from nicegui import app, ui
 import os
 app.add_static_files('/static', os.path.join(os.path.dirname(__file__), 'static'))
 
-
 from app.pages.account.account import account_page
 from app.pages.account.account_email import cambia_email_page
 from app.pages.account.account_mostra import mostra_dati_account_page
@@ -15,6 +14,11 @@ from app.pages.home import home_cliente, home_dipendente, home_notaio
 from app.pages.servizi import servizi_page
 from app.pages.account.logout import logout_page
 from app.pages.pagamento import pagamento_page
+
+# --- NUOVE PAGINE AGGIUNTE QUI ---
+from app.pages.dipendenti import dipendenti_page
+from app.pages.clienti import clienti_page
+from app.pages.accettazione import accettazione_page
 
 ui.page('/')(login_page)
 ui.page('/register')(register_page)
@@ -29,8 +33,12 @@ ui.page('/logout')(logout_page)
 ui.page('/documentazione')(documentazione_page)
 ui.page('/servizi')(servizi_page)
 ui.page('/pagamento')(pagamento_page)
-
 ui.page('/account')(account_page)
+
+# --- NUOVE ROUTE AGGIUNTE QUI ---
+ui.page('/dipendenti')(dipendenti_page)
+ui.page('/clienti')(clienti_page)
+ui.page('/accettazione')(accettazione_page)
 
 if __name__ in {"__main__", "__mp_main__"}:
     ui.run(title="Gestione Studio Notarile")

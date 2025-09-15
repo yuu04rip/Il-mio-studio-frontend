@@ -42,7 +42,8 @@ class APIClient:
     def add_notaio(self, user_data, codice_notarile):
         payload = user_data.copy()
         payload["codice_notarile"] = codice_notarile
-        resp = requests.post(f"{API_BASE}/studio/notai", json=payload, headers=self._headers())
+        # Usa il nuovo endpoint
+        resp = requests.post(f"{API_BASE}/auth/register-notaio", json=payload, headers=self._headers())
         resp.raise_for_status()
         return resp.json()
 
