@@ -149,3 +149,4 @@ class APIClient:
         resp = requests.get(f"{API_BASE}/studio/servizi/", headers=self._headers())
         resp.raise_for_status()
         return resp.json()
+

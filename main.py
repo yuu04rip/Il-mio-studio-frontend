@@ -14,11 +14,9 @@ from app.pages.home import home_cliente, home_dipendente, home_notaio
 from app.pages.servizi import servizi_page
 from app.pages.account.logout import logout_page
 from app.pages.pagamento import pagamento_page
-
-# --- NUOVE PAGINE AGGIUNTE QUI ---
-from app.pages.dipendenti import dipendenti_page
-from app.pages.clienti import clienti_page
-from app.pages.accettazione import accettazione_page
+from app.pages.notaio.dipendenti import dipendenti_page
+from app.pages.notaio.clienti import clienti_page
+from app.pages.notaio.accettazione import accettazione_page
 
 ui.page('/')(login_page)
 ui.page('/register')(register_page)

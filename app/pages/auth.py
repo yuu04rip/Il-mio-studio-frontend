@@ -44,7 +44,7 @@ def login_page():
                                 return
                         data['ruolo'] = selected_ruolo
                         try:
-                            resp = api_session.post('/auth/login', data)
+                            resp = api_session.post('/auth/login',json=data)
                         except Exception:
                             msg.text = "Errore di connessione al server."
                             return
@@ -55,8 +55,10 @@ def login_page():
                             if user_resp.status_code == 200:
                                 api_session.set_user(user_resp.json())
                                 ruolo_utente = api_session.user.get('ruolo', '').upper()
-                                if ruolo_utente == 'CLIENTE':
-                                    ui.navigate.to('/home_cliente')
+                                # PRIMA PRIMA: cliente_id = ???   <--- qui errore!
+                                cliente_id = api_session.user.get('id', None)  # oppure 'cliente_id', dipende da come lo chiami nel backend
+                                if ruolo_utente == 'CLIENTE' and cliente_id:
+                                    ui.navigate.to(f'/home_cliente?cliente_id={cliente_id}')
                                 elif ruolo_utente == 'DIPENDENTE':
                                     ui.navigate.to('/home_dipendente')
                                 elif ruolo_utente == 'NOTAIO':
@@ -66,7 +68,7 @@ def login_page():
                             else:
                                 msg.text = "Errore nel recupero dati utente."
                         elif resp.status_code == 403:
-                                msg.text = "Hai messo il ruolo errato."
+                            msg.text = "Hai messo il ruolo errato."
                         else:
                             try:
                                 msg.text = resp.json().get('detail', 'Email o password non valide.')
@@ -78,7 +80,6 @@ def login_page():
                     ui.button('Password dimenticata?', on_click=lambda: ui.navigate.to('/change_password')).props('flat color=primary').classes('auth-modern-link')
                 ui.separator().style("width:100%;margin-top:28px;")
                 ui.label("© 2025 Il Mio Studio").style("color:#b0b7c3;margin:23px 0 10px 0;font-size:.98em;")
-
 
 def register_page():
     with ui.element("div").classes("auth-absolute-center"):
