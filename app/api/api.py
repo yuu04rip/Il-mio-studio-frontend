@@ -1,8 +1,8 @@
 import requests
 
-BACKEND_URL = 'http://localhost:8000'  # Cambia con il tuo backend
+API_BASE = "http://localhost:8000"  # Cambia con l'URL reale del backend
 
-class APISession:
+class APIClient:
     def __init__(self):
         self.token = None
         self.user = None
@@ -18,38 +18,223 @@ class APISession:
             return {'Authorization': f'Bearer {self.token}'}
         return {}
 
-    def post(self, url, data=None, **kwargs):   # <--- AGGIUNGI **kwargs
+    def post(self, url, data=None, **kwargs):
         full_url = f'http://localhost:8000{url}' if url.startswith('/') else url
-        # Passa sia data che json (o altro) a requests.post!
         return requests.post(full_url, data=data, headers=self._headers(), **kwargs)
 
     def get(self, endpoint: str):
-        return requests.get(f"{BACKEND_URL}{endpoint}", headers=self._headers())
+        return requests.get(f"{API_BASE}{endpoint}", headers=self._headers())
 
     def put(self, endpoint: str, data: dict):
-        return requests.put(f"{BACKEND_URL}{endpoint}", json=data, headers=self._headers())
+        return requests.put(f"{API_BASE}{endpoint}", json=data, headers=self._headers())
 
     def delete(self, endpoint: str):
-        return requests.delete(f"{BACKEND_URL}{endpoint}", headers=self._headers())
+        return requests.delete(f"{API_BASE}{endpoint}", headers=self._headers())
+
+    # --- AUTH ---
+    def login(self, email, password):
+        resp = requests.post(f"{API_BASE}/auth/login", json={"email": email, "password": password})
+        resp.raise_for_status()
+        data = resp.json()
+        self.token = data["access_token"]
+        return data
+
+    def register(self, user_data):
+        resp = requests.post(f"{API_BASE}/auth/register", json=user_data)
+        resp.raise_for_status()
+        data = resp.json()
+        self.token = data["access_token"]
+        return data
+
+    def get_me(self):
+        resp = requests.get(f"{API_BASE}/users/me", headers=self._headers())
+        resp.raise_for_status()
+        return resp.json()
+
+    # --- DIPENDENTE / NOTAIO ---
     def register_dipendente(self, user_data):
-        """Registra un dipendente tramite endpoint dedicato."""
-        resp = requests.post(f"{BACKEND_URL}/auth/register-dipendente", json=user_data)
+        resp = requests.post(f"{API_BASE}/auth/register-dipendente", json=user_data)
         resp.raise_for_status()
         data = resp.json()
         self.token = data.get("access_token")
         return data
+
+    def add_dipendente(self, user_data, tipo):
+        payload = user_data.copy()
+        payload["tipo"] = tipo
+        resp = requests.post(f"{API_BASE}/studio/dipendenti", json=payload, headers=self._headers())
+        resp.raise_for_status()
+        return resp.json()
+
+    def add_notaio(self, user_data, codice_notarile):
+        payload = user_data.copy()
+        payload["codice_notarile"] = codice_notarile
+        resp = requests.post(f"{API_BASE}/auth/register-notaio", json=payload, headers=self._headers())
+        resp.raise_for_status()
+        return resp.json()
+
+    def elimina_dipendente(self, dipendente_id):
+        resp = requests.delete(f"{API_BASE}/studio/dipendente/{dipendente_id}", headers=self._headers())
+        resp.raise_for_status()
+        return resp.json()
+
+    def distruggi_dipendente(self, dipendente_id):
+        resp = requests.delete(f"{API_BASE}/studio/dipendente/{dipendente_id}/distruggi", headers=self._headers())
+        resp.raise_for_status()
+        return resp.json()
+
+    def visualizza_lavoro_da_svolgere(self, dipendente_id):
+        resp = requests.get(f"{API_BASE}/studio/dipendente/{dipendente_id}/servizi", headers=self._headers())
+        resp.raise_for_status()
+        return resp.json()
+
+    def visualizza_servizi_inizializzati(self, dipendente_id):
+        resp = requests.get(f"{API_BASE}/studio/dipendente/{dipendente_id}/servizi_inizializzati", headers=self._headers())
+        resp.raise_for_status()
+        return resp.json()
+
+    # --- DOCUMENTAZIONE ---
+    def carica_documentazione(self, cliente_id, tipo, filepath):
+        url = f"{API_BASE}/studio/documenti/carica"
+        files = {'file': open(filepath, 'rb')}
+        data = {'cliente_id': cliente_id, 'tipo': tipo}
+        resp = requests.post(url, data=data, files=files, headers=self._headers())
+        resp.raise_for_status()
+        return resp.json()
+
+    def visualizza_documentazione(self, cliente_id):
+        url = f"{API_BASE}/studio/documenti/visualizza/{cliente_id}"
+        resp = requests.get(url, headers=self._headers())
+        resp.raise_for_status()
+        return resp.json()
+
+    def sostituisci_documentazione(self, doc_id, filepath):
+        url = f"{API_BASE}/studio/documenti/sostituisci/{doc_id}"
+        files = {'file': open(filepath, 'rb')}
+        resp = requests.put(url, files=files, headers=self._headers())
+        resp.raise_for_status()
+        return resp.json()
+
+    # --- SERVIZI ---
+    def archivia_servizio(self, servizio_id):
+        resp = requests.post(f"{API_BASE}/studio/servizi/{servizio_id}/archivia", headers=self._headers())
+        resp.raise_for_status()
+        return resp.json()
+
+    def mostra_servizi_archiviati(self):
+        resp = requests.get(f"{API_BASE}/studio/servizi/archiviati", headers=self._headers())
+        resp.raise_for_status()
+        return resp.json()
+
+    def modifica_servizio_archiviato(self, servizio_id, statoServizio: bool):
+        resp = requests.put(
+            f"{API_BASE}/studio/servizi/{servizio_id}/modifica-archiviazione",
+            json={"statoServizio": statoServizio},
+            headers=self._headers()
+        )
+        resp.raise_for_status()
+        return resp.json()
+
+    def cerca_cliente_per_nome(self, nome):
+        resp = requests.get(f"{API_BASE}/studio/clienti/nome/{nome}", headers=self._headers())
+        resp.raise_for_status()
+        return resp.json()
+
     def search_clienti(self, query):
-        """Cerca clienti per nome o cognome (substring, case-insensitive)."""
-        resp = requests.get(f"{BACKEND_URL}/studio/clienti/search/", params={"q": query}, headers=self._headers())
+        resp = requests.get(f"{API_BASE}/studio/clienti/search/", params={"q": query}, headers=self._headers())
         resp.raise_for_status()
         return resp.json()
+
     def invia_chat_richiesta_servizio(self, cliente_id: int, testo: str):
-        """Invia una richiesta servizio via mini chat/email."""
         resp = requests.post(
-        f"{BACKEND_URL}/studio/servizi/richiesta-chat",
-        json={"cliente_id": cliente_id, "testo": testo},
-        headers=self._headers()
-    )
+            f"{API_BASE}/studio/servizi/richiesta-chat",
+            json={"cliente_id": cliente_id, "testo": testo},
+            headers=self._headers()
+        )
         resp.raise_for_status()
         return resp.json()
-api_session = APISession()
+
+    def inizializza_servizio(self, servizio_id):
+        resp = requests.post(
+            f"{API_BASE}/studio/servizi/{servizio_id}/inizializza",
+            headers=self._headers()
+        )
+        resp.raise_for_status()
+        return resp.json()
+
+    def inoltra_servizio_notaio(self, servizio_id):
+        resp = requests.post(
+            f"{API_BASE}/studio/servizi/{servizio_id}/inoltra-notaio",
+            headers=self._headers()
+        )
+        resp.raise_for_status()
+        return resp.json()
+
+    def servizi_da_approvare(self):
+        resp = requests.get(
+            f"{API_BASE}/studio/notai/servizi",
+            headers=self._headers()
+        )
+        resp.raise_for_status()
+        return resp.json()
+
+    def approva_servizio(self, servizio_id):
+        resp = requests.post(
+            f"{API_BASE}/studio/servizi/{servizio_id}/approva",
+            headers=self._headers()
+        )
+        resp.raise_for_status()
+        return resp.json()
+
+    def rifiuta_servizio(self, servizio_id):
+        resp = requests.post(
+            f"{API_BASE}/studio/servizi/{servizio_id}/rifiuta",
+            headers=self._headers()
+        )
+        resp.raise_for_status()
+        return resp.json()
+
+    def assegna_servizio(self, servizio_id, dipendente_id):
+        resp = requests.put(
+            f"{API_BASE}/studio/servizi/{servizio_id}/assegna",
+            json={"dipendente_id": dipendente_id},
+            headers=self._headers()
+        )
+        resp.raise_for_status()
+        return resp.json()
+
+    def crea_servizio(self, cliente_id, tipo, codice_corrente, codice_servizio, dipendente_id):
+        url = f"{API_BASE}/studio/servizi"
+        data = {
+            "cliente_id": int(cliente_id),
+            "tipo": tipo,
+            "codiceCorrente": int(codice_corrente),
+            "codiceServizio": int(codice_servizio),
+            "dipendente_id": int(dipendente_id)
+        }
+        resp = requests.post(url, json=data, headers=self._headers())
+        resp.raise_for_status()
+        return resp.json()
+
+    def cerca_servizio_per_codice(self, codice_servizio):
+        resp = requests.get(f"{API_BASE}/studio/servizi/codice/{codice_servizio}", headers=self._headers())
+        resp.raise_for_status()
+        return resp.json()
+
+    def elimina_servizio(self, servizio_id):
+        resp = requests.delete(f"{API_BASE}/studio/servizi/{servizio_id}", headers=self._headers())
+        resp.raise_for_status()
+        return resp.json()
+
+    def distruggi_servizio(self, servizio_id):
+        resp = requests.delete(f"{API_BASE}/studio/servizi/{servizio_id}/distruggi", headers=self._headers())
+        resp.raise_for_status()
+        return resp.json()
+
+    def visualizza_servizi(self):
+        resp = requests.get(f"{API_BASE}/studio/servizi/", headers=self._headers())
+        resp.raise_for_status()
+        return resp.json()
+
+# Unica istanza da usare ovunque
+api_session = APIClient()
