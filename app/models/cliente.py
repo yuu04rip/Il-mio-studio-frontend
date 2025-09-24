@@ -1,17 +1,19 @@
-from utente import Utente
-from documentazione import Documentazione
-from servizio import Servizio
 class Cliente:
-    def __init__(self, utente, id,  documentazione=None, serviziRichiesti=None):
-        self.utente = Utente(**utente)
-        self.documentazione = documentazione
-        self.serviziRichiesti = serviziRichiesti
-    def aggiungiDocumentazione(self, documentazione):
-        self.documentazione.append(documentazione)
-    def mostraLavoriPerServizio(self, servizio    ):
-        return self.serviziRichiesti(servizio).visualizzaLavoro()
-    def sostituisciDocumentazione(self, documentazioneDaSostituire):
-        index= self.documentazione.index(documentazioneDaSostituire)
-        self.documentazione[index] = documentazioneDaSostituire
-    def visualizzaDocumentazione(self):
-        return self.documentazione.visualizzaDocumento()
+    def __init__(self, id, nome, cognome, email, servizi=None, is_deleted=False):
+        self.id = id
+        self.nome = nome
+        self.cognome = cognome
+        self.email = email
+        self.servizi = servizi or []  # lista di Servizio
+        self.is_deleted = is_deleted
+
+    @classmethod
+    def from_dict(cls, d):
+        return cls(
+            id=d.get("id"),
+            nome=d.get("nome"),
+            cognome=d.get("cognome"),
+            email=d.get("email"),
+            servizi=d.get("servizi", []),
+            is_deleted=d.get("is_deleted", False),
+        )

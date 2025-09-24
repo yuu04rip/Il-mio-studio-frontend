@@ -1,42 +1,42 @@
-from datetime import datetime, timedelta
-from documentazione import Documentazione
-from cliente import Cliente
-from dipendente_tecnico import DipendenteTecnico
 class Servizio:
-    def __init__(self, id, dipendenteTecnico,dataCorrente, tipoServizio, Cliente=None, lavoroCaricato=None):
+    def __init__(
+            self,
+            id,
+            cliente_id,
+            codiceCorrente,
+            codiceServizio,
+            dataConsegna,
+            dataRichiesta,
+            statoServizio,
+            tipo,
+            is_deleted=False,
+            lavoroCaricato=None,
+            dipendenti=None,
+    ):
         self.id = id
-        self.dipendenteTecnico = dipendenteTecnico
-        self.Cliente = Cliente
-        self.lavoroCaricato = lavoroCaricato
-        self.dataCorrente = dataCorrente
-        intervallo_giorni = timedelta(days=20)
-        self.dataConsegna=dataCorrente + intervallo_giorni
-        self.statoServizio= "INIZIALIZZATO"
-        self.tipoServizio = tipoServizio
-    def aggiungiLavoro (self, documentazione):
-        self.lavoroCaricato.append(documentazione)
-    def getIdServizio(self):
-        return self.id
-    def getDataCorrente(self):
-        return self.dataCorrente
-    def getDataConsegna(self):
-        return self.dataConsegna
-    def getInfoServizio(self):
-        return self.tipoServizio & self.Cliente.get_nome()
-    def getStatoServizio(self):
-        return self.statoServizio
-    def modificaLavoro(self, documentazione1, documentazione2):
-        index=self.lavoroCaricato.index(documentazione1)
-        self.lavoroCaricato[index] = documentazione2
-    def setStatoServizio(self, statoServizio):
+        self.cliente_id = cliente_id
+        self.codiceCorrente = codiceCorrente
+        self.codiceServizio = codiceServizio
+        self.dataConsegna = dataConsegna
+        self.dataRichiesta = dataRichiesta
         self.statoServizio = statoServizio
-    def visualizzaLavoro(self):
-        return self.lavoroCaricato
-    def __del__(self):
-        print(f"Documento eliminato.")
-    def get_nome_dipendentiTecnici(self):
-        nomiDipendentiTempr=None
-        for dipendente in self.dipendenteTecnico:
-         nomiDipendentiTempr.append(dipendente)
-        return nomiDipendentiTempr
+        self.tipo = tipo
+        self.is_deleted = is_deleted
+        self.lavoroCaricato = lavoroCaricato or []
+        self.dipendenti = dipendenti or []
 
+    @classmethod
+    def from_dict(cls, d):
+        return cls(
+            id=d.get("id"),
+            cliente_id=d.get("cliente_id"),
+            codiceCorrente=d.get("codiceCorrente"),
+            codiceServizio=d.get("codiceServizio"),
+            dataConsegna=d.get("dataConsegna"),
+            dataRichiesta=d.get("dataRichiesta"),
+            statoServizio=d.get("statoServizio"),
+            tipo=d.get("tipo"),
+            is_deleted=d.get("is_deleted", False),
+            lavoroCaricato=d.get("lavoroCaricato", []),
+            dipendenti=d.get("dipendenti", []),
+        )

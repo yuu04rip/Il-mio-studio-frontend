@@ -1,10 +1,23 @@
-from cliente import Cliente
-from utente import Utente
 class DipendenteTecnico:
-    def __init__(self, utente, id, clienti=None):
-        self.utente = Utente(**utente)
+    def __init__(self, id, nome, cognome, email, numeroTelefonico, ruolo, servizi=None, is_deleted=False):
         self.id = id
-        self.clienti = clienti
-    def __del__(self):
-        print(f"Dipendente cancellato dal database.")
-  ## mancano i metodi in relazione con i gestori
+        self.nome = nome
+        self.cognome = cognome
+        self.email = email
+        self.numeroTelefonico = numeroTelefonico
+        self.ruolo = ruolo
+        self.servizi = servizi or []  # lista di Servizio
+        self.is_deleted = is_deleted
+
+    @classmethod
+    def from_dict(cls, d):
+        return cls(
+            id=d.get("id"),
+            nome=d.get("nome"),
+            cognome=d.get("cognome"),
+            email=d.get("email"),
+            numeroTelefonico=d.get("numeroTelefonico"),
+            ruolo=d.get("ruolo"),
+            servizi=d.get("servizi", []),
+            is_deleted=d.get("is_deleted", False),
+        )
