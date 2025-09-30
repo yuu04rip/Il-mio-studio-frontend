@@ -1,5 +1,5 @@
 from nicegui import ui
-from app.pages.chatbox import chatbox # importa la chatbox separata!
+from app.pages.cliente.chatbox import chatbox # importa la chatbox separata!
 # Se il file si chiama diversamente, cambia anche qui!
 
 def home_cliente(cliente_id: int):
@@ -13,7 +13,9 @@ def home_cliente(cliente_id: int):
             ui.button('DOCUMENTAZIONE', icon='folder', on_click=lambda: ui.navigate.to('/documentazione')).classes('q-pa-xl').style('min-width:160px;')
         with ui.row().classes('q-gutter-lg'):
             ui.button('EFFETTUA PAGAMENTO', icon='payments', on_click=lambda: ui.navigate.to('/pagamento')).classes('q-pa-xl').style('min-width:160px;')
-            ui.button('SERVIZI', icon='work', on_click=lambda: ui.navigate.to('/servizi')).classes('q-pa-xl').style('min-width:160px;')
+            ui.button('SERVIZI', icon='work',
+                      on_click=lambda: ui.navigate.to(f'/servizi_cliente/{cliente_id}')
+                      ).classes('q-pa-xl').style('min-width:160px;')
 
     # --- CHAT BOT ---
     chatbox(cliente_id)  # Usa la chatbox importata!

@@ -2,6 +2,7 @@ from nicegui import ui
 from app.api.api import api_session
 
 def login_page():
+    print("Rendering login page")
     with ui.element("div").classes("auth-absolute-center"):
         with ui.card().classes('auth-modern-card shadow-8').style('max-width:410px;min-width:320px;padding:0;overflow:hidden;'):
             with ui.column().classes('items-center').style('padding:0;'):
