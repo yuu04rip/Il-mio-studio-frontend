@@ -31,6 +31,9 @@ class APIClient:
     def delete(self, endpoint: str):
         return requests.delete(f"{API_BASE}{endpoint}", headers=self._headers())
 
+    def patch(self, endpoint: str, data: dict):
+            return requests.patch(f"{API_BASE}{endpoint}", json=data, headers=self._headers())
+
     # --- AUTH ---
     def login(self, email, password):
         resp = requests.post(f"{API_BASE}/auth/login", json={"email": email, "password": password})
@@ -235,6 +238,20 @@ class APIClient:
         resp = requests.get(f"{API_BASE}/studio/servizi/", headers=self._headers())
         resp.raise_for_status()
         return resp.json()
+    def get_dipendente_id_by_user(self, utente_id):
+        resp = requests.get(f"{API_BASE}/studio/dipendente/by_user/{utente_id}", headers=self._headers())
+        resp.raise_for_status()
+        return resp.json()
+
+    def visualizza_servizi_completati(self, dipendente_id):
+         resp = requests.get(f"{API_BASE}/studio/dipendente/{dipendente_id}/servizi_completati", headers=self._headers())
+         resp.raise_for_status()
+         return resp.json()
+
+    def visualizza_servizi_finalizzati(self, dipendente_id):
+         resp = requests.get(f"{API_BASE}/studio/dipendente/{dipendente_id}/servizi_finalizzati", headers=self._headers())
+         resp.raise_for_status()
+         return resp.json()
 
 # Unica istanza da usare ovunque
 api_session = APIClient()
