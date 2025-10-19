@@ -2,7 +2,6 @@ from nicegui import ui
 from app.api.api import api_session
 
 def login_page():
-    print("Rendering login page")
     with ui.element("div").classes("auth-absolute-center"):
         with ui.card().classes('auth-modern-card shadow-8').style('max-width:410px;min-width:320px;padding:0;overflow:hidden;'):
             with ui.column().classes('items-center').style('padding:0;'):
@@ -45,7 +44,7 @@ def login_page():
                                 return
                         data['ruolo'] = selected_ruolo
                         try:
-                            resp = api_session.post('/auth/login',json=data)
+                            resp = api_session.post('/auth/login', json=data)
                         except Exception:
                             msg.text = "Errore di connessione al server."
                             return
@@ -56,8 +55,7 @@ def login_page():
                             if user_resp.status_code == 200:
                                 api_session.set_user(user_resp.json())
                                 ruolo_utente = api_session.user.get('ruolo', '').upper()
-                                # PRIMA PRIMA: cliente_id = ???   <--- qui errore!
-                                cliente_id = api_session.user.get('id', None)  # oppure 'cliente_id', dipende da come lo chiami nel backend
+                                cliente_id = api_session.user.get('id', None)
                                 if ruolo_utente == 'CLIENTE' and cliente_id:
                                     ui.navigate.to(f'/home_cliente?cliente_id={cliente_id}')
                                 elif ruolo_utente == 'DIPENDENTE':
@@ -115,7 +113,6 @@ def register_page():
                             msg.text = "Errore di connessione al server"
                             return
                         if resp.status_code == 200:
-                            # Login automatico dopo registrazione
                             login_data = {
                                 'email': email.value,
                                 'password': password.value,
@@ -186,8 +183,7 @@ def change_password_page():
                 ui.label("© 2025 Il Mio Studio").style("color:#b0b7c3;margin:23px 0 10px 0;font-size:.98em;")
 
 
-# --- Stili globali per tutte le card di autenticazione ---
-ui.add_head_html("""
+    ui.add_head_html("""
 <style>
 html, body {
     height: 100%;

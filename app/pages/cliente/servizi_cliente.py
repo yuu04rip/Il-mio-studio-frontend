@@ -5,7 +5,6 @@ def servizi_cliente_approvati_page(cliente_id: int):
     """Pagina per visualizzare tutti i servizi APPROVATI di un cliente"""
 
     with ui.card().classes('q-pa-xl q-mt-xl q-mx-auto').style('max-width: 900px;'):
-        # Pulsante Torna alla Home
         ui.button(
             'Torna alla Home',
             icon='home',

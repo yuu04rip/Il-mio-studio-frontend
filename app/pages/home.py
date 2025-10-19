@@ -1,9 +1,7 @@
 from nicegui import ui
-from app.pages.cliente.chatbox import chatbox # importa la chatbox separata!
-# Se il file si chiama diversamente, cambia anche qui!
+from app.pages.cliente.chatbox import chatbox
 
 def home_cliente(cliente_id: int):
-    # --- CARD PRINCIPALE ---
     with ui.card().classes('q-pa-xl q-mt-xl q-mx-auto'):
         ui.label('HOME').classes('text-h5 q-mb-lg').style(
             'background:#2196f3;color:white;border-radius:2em;padding:.5em 3em;display:block;text-align:center;'
@@ -17,22 +15,19 @@ def home_cliente(cliente_id: int):
                       on_click=lambda: ui.navigate.to(f'/servizi_cliente/{cliente_id}')
                       ).classes('q-pa-xl').style('min-width:160px;')
 
-    # --- CHAT BOT ---
-    chatbox(cliente_id)  # Usa la chatbox importata!
+    chatbox(cliente_id)
 
 def home_dipendente():
     with ui.card().classes('q-pa-xl q-mt-xl q-mx-auto'):
         ui.label('HOME').classes('text-h5 q-mb-lg') \
             .style('background:#2196f3;color:white;border-radius:2em;padding:.5em 3em;display:block;text-align:center;')
         with ui.row().classes('q-gutter-lg q-mb-md'):
-            ui.button('CLIENTI', icon='groups', on_click=lambda: ui.navigate.to('/clienti')) \
+            ui.button('CLIENTI', icon='groups', on_click=lambda: ui.navigate.to('/clienti_dipendente')) \
                 .classes('q-pa-xl').style('min-width:160px;')
             ui.button('ACCOUNT', icon='person', on_click=lambda: ui.navigate.to('/account')) \
                 .classes('q-pa-xl').style('min-width:160px;')
         with ui.row().classes('q-gutter-lg'):
             ui.button('SERVIZI DA SVOLGERE', icon='work', on_click=lambda: ui.navigate.to('/servizi')) \
-                .classes('q-pa-xl').style('min-width:160px;')
-            ui.button('DOCUMENTAZIONE', icon='folder', on_click=lambda: ui.navigate.to('/documentazione')) \
                 .classes('q-pa-xl').style('min-width:160px;')
 
 def home_notaio():

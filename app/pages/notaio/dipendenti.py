@@ -6,7 +6,6 @@ def dipendenti_page():
         'background:#1976d2;color:white;border-radius:2em;padding:.5em 2.5em;display:block;text-align:center;font-weight:600;letter-spacing:0.04em;'
     )
 
-    # Sezione aggiunta dipendente
     with ui.card().classes('q-mb-xl shadow-3').style('max-width:440px;margin:auto;'):
         ui.label('Aggiungi Dipendente').classes('text-h6 q-mb-md')
         nome = ui.input('Nome').props('outlined dense')
@@ -14,7 +13,6 @@ def dipendenti_page():
         email = ui.input('Email').props('outlined dense type=email')
         numero = ui.input('Numero telefonico').props('outlined dense type=tel')
         password = ui.input('Password', password=True).props('outlined dense')
-        # Se vuoi solo dipendenti puoi togliere la select, oppure lasciare per futura espansione
         ruolo = ui.select(
             options=['DIPENDENTE', 'NOTAIO'], label='Ruolo'
         ).props('outlined dense')
@@ -46,7 +44,6 @@ def dipendenti_page():
 
         ui.button('Aggiungi', on_click=do_add).classes('q-mt-md')
 
-    # Sezione lista dipendenti
     with ui.card().classes('shadow-5').style('max-width:600px;margin:auto;'):
         ui.label('Lista Dipendenti').classes('text-h6 q-mb-md')
         dip_list = ui.column().classes('full-width').style('gap:14px;')

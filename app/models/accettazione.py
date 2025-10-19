@@ -3,7 +3,7 @@ class Accettazione:
         self.id = id
         self.servizio_id = servizio_id
         self.dipendente_id = dipendente_id
-        self.stato = stato  # es. "IN_ATTESA", "ACCETTATO", "RIFIUTATO"
+        self.stato = stato
         self.data_accettazione = data_accettazione
 
     @classmethod

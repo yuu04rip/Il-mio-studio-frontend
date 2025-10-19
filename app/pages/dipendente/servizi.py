@@ -38,7 +38,6 @@ def servizi_dipendente_page():
         return
 
     with ui.card().classes('q-pa-xl q-mt-xl q-mx-auto'):
-        # Barra superiore
         with ui.row().classes('items-center q-mb-md'):
             ui.icon('engineering', size='40px').classes('q-mr-md')
             ui.label('SERVIZI DA SVOLGERE').classes(
@@ -49,40 +48,13 @@ def servizi_dipendente_page():
                       on_click=lambda: crea_servizio_dialog.open()).classes('q-ml-lg q-pa-md')
 
         servizi = []
-
-        def carica_tutti_servizi():
-            """Carica tutti i servizi del dipendente (tutti gli stati)"""
-            nonlocal servizi
-            servizi.clear()
-
-            try:
-                # Servizi in stato CREATO
-                res_creati = api_session.visualizza_lavoro_da_svolgere(dipendente_id)
-                if isinstance(res_creati, list):
-                    servizi.extend([Servizio.from_dict(s) for s in res_creati])
-
-                # Servizi in stato IN_LAVORAZIONE
-                res_in_lavorazione = api_session.visualizza_servizi_inizializzati(dipendente_id)
-                if isinstance(res_in_lavorazione, list):
-                    servizi.extend([Servizio.from_dict(s) for s in res_in_lavorazione])
-
-                # NUOVO: Servizi in stati APPROVATO e RIFIUTATO
-                res_completati = api_session.visualizza_servizi_completati(dipendente_id)
-                if isinstance(res_completati, list):
-                    servizi.extend([Servizio.from_dict(s) for s in res_completati])
-
-            except Exception as e:
-                print(f"Errore nel caricamento servizi: {e}")
-
-        # Carica iniziale
-        carica_tutti_servizi()
-
-        if not servizi:
-            ui.label("Nessun servizio trovato.").classes("text-grey-7 q-mt-lg")
+        servizi_altri = []
+        servizi_approvati_disponibili = []
 
         servizi_container = ui.column().classes('full-width').style('gap:18px;')
+        servizi_altri_container = ui.column().classes('full-width').style('gap:18px;')
+        servizi_approvati_container = ui.column().classes('full-width').style('gap:18px;')
 
-        # --- Modifica servizio dialog ---
         modifica_dialog = ui.dialog()
         with modifica_dialog:
             with ui.card().classes('q-pa-md').style('max-width:400px;'):
@@ -123,11 +95,41 @@ def servizi_dipendente_page():
             msg_modifica.text = ''
             modifica_dialog.open()
 
+        def carica_tutti_servizi():
+            nonlocal servizi, servizi_altri, servizi_approvati_disponibili
+            servizi.clear()
+            servizi_altri.clear()
+            servizi_approvati_disponibili.clear()
+            try:
+                res_creati = api_session.visualizza_lavoro_da_svolgere(dipendente_id)
+                res_in_lavorazione = api_session.visualizza_servizi_inizializzati(dipendente_id)
+                res_completati = api_session.visualizza_servizi_completati(dipendente_id)
+                res_altri = api_session.get_altri_servizi(dipendente_id)
+                res_approvati = api_session.visualizza_servizi_approvati()
+
+                for r in [res_creati, res_in_lavorazione, res_completati]:
+                    if isinstance(r, list):
+                        servizi.extend([Servizio.from_dict(s) for s in r])
+
+                if isinstance(res_altri, list):
+                    servizi_altri.extend([Servizio.from_dict(s) for s in res_altri])
+
+                miei_servizi_ids = {s.id for s in servizi}
+                if isinstance(res_approvati, list):
+                    for s in res_approvati:
+                        assigned_ids = [
+                            d['id'] if isinstance(d, dict) and 'id' in d else d
+                            for d in s.get('dipendenti', [])
+                        ]
+                        if dipendente_id not in assigned_ids and s['id'] not in miei_servizi_ids:
+                            servizi_approvati_disponibili.append(Servizio.from_dict(s))
+            except Exception as e:
+                print(f"Errore caricamento servizi: {e}")
+
         def elimina_servizio(servizio_id):
             try:
                 api_session.elimina_servizio(servizio_id)
                 ui.notify("Servizio eliminato!", color="positive")
-                # Rimuovi dalla lista locale
                 servizi[:] = [s for s in servizi if s.id != servizio_id]
                 refresh_servizi(search_box.value)
             except Exception as e:
@@ -142,76 +144,6 @@ def servizi_dipendente_page():
             except Exception as e:
                 ui.notify(str(e), color="negative")
 
-        def refresh_servizi(filter_text=""):
-            servizi_container.clear()
-            filtered = [s for s in servizi if not getattr(s, "is_deleted", False)]
-
-            if filter_text:
-                filtered = [s for s in filtered if filter_text.lower() in s.tipo.lower()
-                            or filter_text.lower() in str(s.codiceServizio)]
-
-            if not filtered:
-                with servizi_container:
-                    ui.label('Nessun servizio trovato.').classes(
-                        "text-grey-7 q-mt-md").style("text-align:center;font-size:1.12em;")
-                return
-
-            for servizio in filtered:
-                with servizi_container:
-                    # Colori diversi per ogni stato
-                    card_style = 'background:#e0f7fa;'  # Default: azzurro per CREATO/IN_LAVORAZIONE
-                    if str(servizio.statoServizio).lower() == 'approvato':
-                        card_style = 'background:#e8f5e8;'  # Verde chiaro per APPROVATO
-                    elif str(servizio.statoServizio).lower() == 'rifiutato':
-                        card_style = 'background:#ffebee;'  # Rosso chiaro per RIFIUTATO
-                    elif str(servizio.statoServizio).lower() == 'consegnato':
-                        card_style = 'background:#f3e5f5;'  # Viola chiaro per CONSEGNATO
-
-                    with ui.card().classes('q-pa-md q-mb-md').style(card_style):
-                        ui.label(
-                            f"{servizio.tipo} (Codice: {servizio.codiceServizio})"
-                        ).classes('text-h6 q-mb-sm')
-                        with ui.row().classes('items-center q-gutter-xs'):
-                            ui.icon(get_icon_for_stato(str(servizio.statoServizio).upper()), size='24px').classes('q-mr-xs')
-                            ui.label(
-                                f"Stato: {servizio.statoServizio}").classes('text-subtitle2 q-mb-xs')
-                        with ui.row().classes('q-gutter-md'):
-                            stato = str(servizio.statoServizio).lower()
-
-                            if stato == 'creato':
-                                ui.button(
-                                    'Inizializza', icon='play_arrow',
-                                    on_click=lambda s=servizio: inizializza_servizio(s.id)
-                                ).classes('q-pa-md')
-
-                            if stato == 'in_lavorazione':
-                                ui.button(
-                                    'Carica documento', icon='upload',
-                                    on_click=lambda s=servizio: ui.navigate.to(f'/servizi/{s.id}/carica')
-                                ).classes('q-pa-md')
-                                ui.button(
-                                    'Inoltra al notaio', icon='send',
-                                    on_click=lambda s=servizio: inoltra_servizio_notaio(s.id)
-                                ).classes('q-pa-md')
-                                ui.button(
-                                    'Modifica', icon='edit',
-                                    on_click=lambda s=servizio: apri_modifica(s)
-                                ).classes('q-pa-md')
-                                ui.button(
-                                    'Elimina', icon='delete',
-                                    on_click=lambda s=servizio: elimina_servizio(s.id)
-                                ).classes('q-pa-md')
-
-                            # Per servizi APPROVATI/RIFIUTATI, mostra solo azioni di visualizzazione
-                            if stato in ['approvato', 'rifiutato', 'consegnato']:
-                                ui.button('Visualizza dettagli', icon='visibility', on_click=lambda s=servizio: ui.navigate.to(f'/servizi/{s.id}/dettagli'))
-
-                            # Visualizza documentazione sempre
-                            ui.button(
-                                'Documentazione', icon='folder',
-                                on_click=lambda s=servizio: ui.navigate.to(f'/servizi/{s.id}/documenti')
-                            ).classes('q-pa-md')
-
         def inizializza_servizio(servizio_id):
             try:
                 api_session.inizializza_servizio(servizio_id)
@@ -221,13 +153,90 @@ def servizi_dipendente_page():
             except Exception as e:
                 ui.notify(str(e), color="negative")
 
+        def refresh_servizi(filter_text=""):
+            servizi_container.clear()
+            filtered = [s for s in servizi if not getattr(s, "is_deleted", False)]
+            if filter_text:
+                filtered = [s for s in filtered if filter_text.lower() in s.tipo.lower()
+                            or filter_text.lower() in str(s.codiceServizio)]
+            if not filtered:
+                with servizi_container:
+                    ui.label('Nessun servizio trovato.').classes(
+                        "text-grey-7 q-mt-md").style("text-align:center;font-size:1.12em;")
+                return
+
+            for servizio in filtered:
+                with servizi_container:
+                    card_style = 'background:#e0f7fa;'
+                    stato = str(servizio.statoServizio).lower()
+                    if stato == 'approvato':
+                        card_style = 'background:#e8f5e8;'
+                    elif stato == 'rifiutato':
+                        card_style = 'background:#ffebee;'
+                    elif stato == 'consegnato':
+                        card_style = 'background:#f3e5f5;'
+
+                    with ui.card().classes('q-pa-md q-mb-md').style(card_style):
+                        ui.label(f"{servizio.tipo} (Codice: {servizio.codiceServizio})").classes('text-h6 q-mb-sm')
+                        with ui.row().classes('items-center q-gutter-xs'):
+                            ui.icon(get_icon_for_stato(str(servizio.statoServizio).upper()), size='24px').classes('q-mr-xs')
+                            ui.label(f"Stato: {servizio.statoServizio}").classes('text-subtitle2 q-mb-xs')
+                        with ui.row().classes('q-gutter-md'):
+                            if stato == 'creato':
+                                ui.button('Inizializza', icon='play_arrow', on_click=lambda s=servizio: inizializza_servizio(s.id)).classes('q-pa-md')
+                            if stato == 'in_lavorazione':
+                                ui.button('Inoltra al notaio', icon='send', on_click=lambda s=servizio: inoltra_servizio_notaio(s.id)).classes('q-pa-md')
+                                ui.button('Modifica', icon='edit', on_click=lambda s=servizio: apri_modifica(s)).classes('q-pa-md')
+                                ui.button('Elimina', icon='delete', on_click=lambda s=servizio: elimina_servizio(s.id)).classes('q-pa-md')
+                            if stato in ['approvato', 'rifiutato', 'consegnato']:
+                                ui.button('Visualizza dettagli', icon='visibility', on_click=lambda s=servizio: ui.navigate.to(f'/servizio_dettagli/{s.id}'))
+                            ui.button('Documentazione', icon='folder', on_click=lambda s=servizio: ui.navigate.to(f'/servizi/{s.id}/documenti')).classes('q-pa-md')
+
+        def refresh_servizi_altri(filter_text=""):
+            servizi_altri_container.clear()
+            filtered = [s for s in servizi_altri if not getattr(s, "is_deleted", False)]
+            if filter_text:
+                filtered = [s for s in filtered if filter_text.lower() in s.tipo.lower()
+                            or filter_text.lower() in str(s.codiceServizio)]
+            if not filtered:
+                with servizi_altri_container:
+                    ui.label('Nessun servizio collaborato trovato.').classes(
+                        "text-grey-7 q-mt-md").style("text-align:center;font-size:1.12em;")
+                return
+            for servizio in filtered:
+                with servizi_altri_container:
+                    ui.label(f"{servizio.tipo} (Codice: {servizio.codiceServizio})").classes('text-h6 q-mb-sm')
+                    ui.button('Documentazione', icon='folder', on_click=lambda s=servizio: ui.navigate.to(f'/servizi/{s.id}/documenti')).classes('q-pa-md')
+
+        def refresh_servizi_approvati_disponibili(filter_text=""):
+            servizi_approvati_container.clear()
+            filtered = [s for s in servizi_approvati_disponibili if not getattr(s, "is_deleted", False)]
+            if filter_text:
+                filtered = [s for s in filtered if filter_text.lower() in s.tipo.lower()
+                            or filter_text.lower() in str(s.codiceServizio)]
+            if not filtered:
+                with servizi_approvati_container:
+                    ui.label('Nessun servizio approvato disponibile trovato.').classes(
+                        "text-grey-7 q-mt-md").style("text-align:center;font-size:1.12em;")
+                return
+            for servizio in filtered:
+                with servizi_approvati_container:
+                    ui.label(f"{servizio.tipo} (Codice: {servizio.codiceServizio})").classes('text-h6 q-mb-sm')
+                    ui.button('Visualizza dettagli', icon='visibility', on_click=lambda s=servizio: ui.navigate.to(f'/servizio_dettagli/{s.id}')).classes('q-pa-md')
+                    ui.button('Documentazione', icon='folder', on_click=lambda s=servizio: ui.navigate.to(f'/servizi/{s.id}/documenti')).classes('q-pa-md')
+
+        carica_tutti_servizi()
+        refresh_servizi()
+        refresh_servizi_altri()
+        refresh_servizi_approvati_disponibili()
+
         def on_search_change(e):
             refresh_servizi(search_box.value)
+            refresh_servizi_altri(search_box.value)
+            refresh_servizi_approvati_disponibili(search_box.value)
 
         search_box.on('update:model-value', on_search_change)
-        refresh_servizi()
 
-    # --- DIALOG per creazione servizio ---
     crea_servizio_dialog = ui.dialog()
     with crea_servizio_dialog:
         with ui.card().classes('q-pa-md').style('max-width:400px;'):
@@ -239,23 +248,19 @@ def servizi_dipendente_page():
             msg_crea = ui.label().classes('text-negative q-mb-sm')
 
             def submit_servizio():
-                cliente_id = cliente_id_input.value
-                tipo = tipo_input.value
-                codice_corrente = codice_corrente_input.value
-                codice_servizio = codice_servizio_input.value
-
-                if not cliente_id or not tipo or not codice_corrente or not codice_servizio:
+                if not cliente_id_input.value or not tipo_input.value or not codice_corrente_input.value or not codice_servizio_input.value:
                     msg_crea.text = 'Compila tutti i campi!'
                     return
-
                 try:
                     api_session.crea_servizio(
-                        int(cliente_id), tipo, codice_corrente, codice_servizio, dipendente_id=dipendente_id
+                        int(cliente_id_input.value), tipo_input.value, codice_corrente_input.value, codice_servizio_input.value,
+                        dipendente_id=dipendente_id
                     )
                     ui.notify('Servizio creato!', color='positive')
                     crea_servizio_dialog.close()
                     carica_tutti_servizi()
                     refresh_servizi(search_box.value)
+                    refresh_servizi_approvati_disponibili(search_box.value)
                 except Exception as e:
                     msg_crea.text = f'Errore: {e}'
 
