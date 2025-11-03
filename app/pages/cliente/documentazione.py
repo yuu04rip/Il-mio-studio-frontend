@@ -1,8 +1,9 @@
 from nicegui import ui
 from app.api.api import api_session
 from app.components.components import header
+import requests
 
-API_BASE_URL = "http://localhost:8000"  # Aggiorna se il backend è su un altro indirizzo
+API_BASE_URL = "http://localhost:8000"
 
 TIPI_DOCUMENTO = [
     {"label": "Carta d'identità", "value": "carta_identita", "icon": "badge"},
@@ -36,7 +37,6 @@ def documentazione_page():
             ).props('accept=.pdf,.jpg,.jpeg,.png color=primary flat').classes('q-px-md')
 
         ui.separator().classes('q-my-lg')
-
         doc_list = ui.column().classes('full-width').style('gap:20px;')
 
         def after_upload(success=True):
@@ -51,8 +51,8 @@ def documentazione_page():
             res = api_session.get(f'/studio/documenti/visualizza/{cliente_id}')
             if res.status_code == 200:
                 docs = res.json()
-                # Filtra solo i documenti non eliminati se il backend usa soft delete
                 docs = [doc for doc in docs if not doc.get("is_deleted", False)]
+                docs = [doc for doc in docs if doc.get("tipo") in [d["value"] for d in TIPI_DOCUMENTO]]
                 if docs:
                     for doc in docs:
                         tipo_label = next((d["label"] for d in TIPI_DOCUMENTO if d["value"] == doc["tipo"]), doc["tipo"])
@@ -108,38 +108,35 @@ def documentazione_page():
     </style>
     """)
 
-def upload_documento(event, cliente_id, tipo, callback):
+async def upload_documento(event, cliente_id, tipo, callback):
     if not tipo:
         ui.notify("Seleziona il tipo di documento!", color='negative')
-        callback(False)
+        if callback:
+            callback(False)
         return
-    import requests
-    url = API_BASE_URL + '/studio/documenti/carica'
-    headers = api_session.get_headers() if hasattr(api_session, 'get_headers') else {}
-    files = {'file': (event.name, event.content, event.type)}
+    filename = getattr(event.file, 'name', 'documento')
+    mimetype = getattr(event, 'type', 'application/octet-stream')
+    content = await event.file.read()
+    files = {'file': (filename, content, mimetype)}
     data = {'cliente_id': str(cliente_id), 'tipo': tipo}
+    headers = api_session.get_headers() if hasattr(api_session, 'get_headers') else {}
     try:
-        resp = requests.post(url, data=data, files=files, headers=headers)
-        callback(resp.status_code == 200)
+        resp = requests.post(f"{API_BASE_URL}/studio/documenti/carica", data=data, files=files, headers=headers)
+        if callback:
+            callback(resp.status_code == 200)
     except Exception:
-        callback(False)
-
-def download_documento(doc_id):
-    url = f"{API_BASE_URL}/documentazione/download/{doc_id}"
-    ui.run_javascript(f"window.open('{url}', '_blank')")
-
-def visualizza_documento(doc_id):
-    url = f"{API_BASE_URL}/documentazione/download/{doc_id}"
-    ui.run_javascript(f"window.open('{url}', '_blank')")
+        if callback:
+            callback(False)
 
 def sostituisci_documento(doc_id, refresh_callback):
-    def on_upload(event):
-        import requests
-        url = API_BASE_URL + f'/studio/documenti/sostituisci/{doc_id}'
+    async def on_upload(event):
+        filename = getattr(event.file, 'name', 'documento')
+        mimetype = getattr(event, 'type', 'application/octet-stream')
+        content = await event.file.read()
+        files = {'file': (filename, content, mimetype)}
         headers = api_session.get_headers() if hasattr(api_session, 'get_headers') else {}
-        files = {'file': (event.name, event.content, event.type)}
         try:
-            resp = requests.put(url, files=files, headers=headers)
+            resp = requests.put(f"{API_BASE_URL}/studio/documenti/sostituisci/{doc_id}", files=files, headers=headers)
             if resp.status_code == 200:
                 ui.notify("Documento sostituito!", color='positive')
             else:
@@ -150,3 +147,11 @@ def sostituisci_documento(doc_id, refresh_callback):
     ui.upload(label='Sostituisci documento', auto_upload=True, on_upload=on_upload).props(
         'accept=.pdf,.jpg,.jpeg,.png color=accent flat'
     )
+
+def download_documento(doc_id):
+    url = f"{API_BASE_URL}/documentazione/download/{doc_id}"
+    ui.run_javascript(f"window.open('{url}', '_blank')")
+
+def visualizza_documento(doc_id):
+    url = f"{API_BASE_URL}/documentazione/download/{doc_id}"
+    ui.run_javascript(f"window.open('{url}', '_blank')")

@@ -1,7 +1,7 @@
 from nicegui import ui
 from app.api.api import api_session
 
-def clienti_page():
+def clienti_page_dipendente():
     ui.label('Clienti').classes('text-h5 q-mt-xl q-mb-lg').style(
         'background:#1976d2;color:white;border-radius:2em;padding:.5em 2.5em;display:block;text-align:center;font-weight:600;letter-spacing:0.04em;'
     )
@@ -38,7 +38,7 @@ def clienti_page():
                         ).props('flat round')
 
     def visualizza_servizi(cliente_id):
-        ui.navigate.to(f'/accettazione')
+        ui.navigate.to(f'/servizi_cliente_approvati/{cliente_id}')
 
     def visualizza_documenti(cliente_id):
         ui.navigate.to(f'/documentazione_cliente/{cliente_id}')

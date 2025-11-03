@@ -9,4 +9,4 @@ def pagamento_page():
             <source src="/static/rickroll.mp4" type="video/mp4">
             Il tuo browser non supporta il video tag.
         </video>
-        """)
+        """, sanitize=False)

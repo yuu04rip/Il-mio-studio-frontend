@@ -6,7 +6,6 @@ def servizio_cliente_dettagli_page(cliente_id: int, servizio_id: int):
     """Pagina dettagli servizio per il cliente"""
 
     with ui.card().classes('q-pa-xl q-mt-xl q-mx-auto').style('max-width: 800px;'):
-        # Header
         with ui.row().classes('items-center q-mb-lg'):
             ui.button(
                 icon='arrow_back',
@@ -27,7 +26,6 @@ def servizio_cliente_dettagli_page(cliente_id: int, servizio_id: int):
             ui.label("Impossibile caricare i dettagli del servizio").classes('text-negative q-mt-md')
             return
 
-        # Info principali
         with ui.card().classes('q-pa-md q-mb-md').style('background:#f5f5f5;'):
             ui.label('INFORMAZIONI PRINCIPALI').classes('text-h6 text-weight-bold q-mb-md')
             with ui.grid(columns=2).classes('w-full gap-4'):
@@ -56,7 +54,6 @@ def servizio_cliente_dettagli_page(cliente_id: int, servizio_id: int):
                     ui.label('Data Consegna:').classes('text-weight-bold q-mt-md')
                     ui.label(servizio.dataConsegna.strftime('%d/%m/%Y %H:%M') if hasattr(servizio.dataConsegna, 'strftime') else servizio.dataConsegna).classes('text-body1')
 
-        # Info cliente
         with ui.card().classes('q-pa-md q-mb-md').style('background:#e8f5e8;'):
             ui.label('I TUOI DATI').classes('text-h6 text-weight-bold q-mb-md')
             with ui.grid(columns=2).classes('w-full gap-4'):
@@ -71,7 +68,6 @@ def servizio_cliente_dettagli_page(cliente_id: int, servizio_id: int):
                     ui.label('ID Cliente:').classes('text-weight-bold q-mt-md')
                     ui.label(str(cliente.get('id', 'N/A'))).classes('text-body1')
 
-        # Dipendente responsabile
         with ui.card().classes('q-pa-md q-mb-md').style('background:#e3f2fd;'):
             ui.label('REFERENTE STUDIO').classes('text-h6 text-weight-bold q-mb-md')
             try:
@@ -90,11 +86,16 @@ def servizio_cliente_dettagli_page(cliente_id: int, servizio_id: int):
                         ui.label("Nessun referente assegnato").classes('text-grey-7 italic')
                 else:
                     ui.label("Impossibile recuperare il referente").classes('text-grey-7 italic')
-            except Exception as e:
+            except Exception:
                 ui.label("Errore nel caricamento del referente").classes('text-grey-7 italic')
 
-        # Pulsanti azione (torna alla lista col cliente_id)
         with ui.row().classes('q-mt-lg justify-center'):
+            ui.button(
+                'Visualizza Documentazione',
+                icon='folder',
+                on_click=lambda: ui.navigate.to(f'/documentaizone_servizio_cliente/{servizio_id}')
+            ).classes('q-pa-md')
+
             ui.button(
                 'Torna alla Lista Servizi',
                 icon='list',
@@ -102,7 +103,6 @@ def servizio_cliente_dettagli_page(cliente_id: int, servizio_id: int):
             ).classes('q-pa-md')
 
 def get_icon_for_stato(stato):
-    """Funzione helper per le icone dello stato"""
     icons = {
         'CREATO': 'pending_actions',
         'IN_LAVORAZIONE': 'play_circle',

@@ -1,21 +1,39 @@
 from nicegui import ui
 
 def account_page():
+    # --- Layout principale centrato ---
+    # Puoi modificare colonne, padding e margini per cambiare la struttura generale
     with ui.column().classes('items-center q-mt-xl'):
+        # --- CARD principale per l'area personale ---
+        # Puoi cambiare: classi ('glass-card', 'shadow-7'), dimensioni, padding
         with ui.card().classes('glass-card shadow-7').style('max-width:440px;min-width:340px;padding:54px 0 44px 0;'):
+            # --- Titolo della card ---
+            # Cambia font, colore, background qui e/o nei CSS sotto
             ui.label('Area personale').classes('text-h5 glass-title').style(
                 'font-weight:700;font-size:2em;letter-spacing:0.04em;margin-bottom:1.7em;'
             )
+
+            # --- Lista delle azioni/bottoni dell'account ---
+            # Puoi aggiungere nuovi bottoni, cambiare icone, label, destinazione
             actions = [
                 ('account_circle', 'Mostra dati account', '/account/mostra'),
-                ('mail',           'Cambia email', '/account/email'),
-                ('vpn_key',        'Modifica password', '/account/password'),
-                ('logout',         'Logout', '/logout'),
+                ('mail', 'Cambia email', '/account/email'),
+                ('vpn_key', 'Modifica password', '/account/password'),
+                ('logout', 'Logout', '/logout'),
             ]
             for icon, label, path in actions:
+                # --- Ogni bottone: puoi personalizzare props, classi, icone, label ---
+                # Esempio: .props('color=primary round') per colore e bordo arrotondato
+                # Puoi aggiungere funzionalità: dialog, input, menu, ecc.
                 with ui.button(on_click=lambda p=path: ui.navigate.to(p)).classes('glass-btn full-width'):
                     ui.icon(icon).classes('glass-icon')
                     ui.label(label).classes('glass-btn-label')
+
+    # --- AGGIUNTA DI HTML/CSS PERSONALIZZATO ---
+    # Qui usi ui.add_head_html per inserire CSS globale (va nel <head>)
+    # Puoi anche usare ui.add_body_html per aggiungere HTML custom nella <body>
+    # ui.add_js_file('path.js') per JS custom, ui.add_css_file('path.css') per CSS esterno
+    # Puoi modificare, aggiungere, togliere stili, colori, effetti, media query...
 
     ui.add_head_html("""
     <style>
@@ -82,3 +100,27 @@ def account_page():
     }
     </style>
     """)
+
+# --- GUIDA E SUGGERIMENTI PER MODIFICARE ---
+# - Vuoi cambiare la grafica? Modifica le classi e i CSS sopra.
+# - Vuoi cambiare pulsanti/icone? Modifica la lista actions e i parametri di ui.button/ui.icon/ui.label.
+# - Puoi usare ui.add_head_html per CSS globale, ui.add_body_html per HTML custom nella pagina.
+# - Puoi usare ui.add_js_file('file.js') e ui.add_css_file('file.css') per JS/CSS esterno.
+# - Puoi aggiungere nuovi componenti NiceGUI: ui.input, ui.select, ui.dialog, ui.menu, ecc.
+# - Tutte le funzioni UI sono documentate qui: https://nicegui.io/documentation
+# - Puoi vedere esempi e playground su https://nicegui.io/
+# - Per layout responsive/mobile, aggiungi media query o usa le classi Quasar/NiceGUI.
+# - Consigliato: commenta ogni sezione così chi modifica trova subito dove agire!
+
+# --- ESEMPI DI USO UI API ---
+# ui.card()          -> crea una card
+# ui.button()        -> crea un bottone, props/color/class per stile
+# ui.icon()          -> crea un'icona (usare nomi da Material Icons: https://fonts.google.com/icons)
+# ui.input()         -> crea un campo testo/input
+# ui.label()         -> testo semplice
+# ui.row(), ui.column()   -> layout orizzontale/verticale
+# ui.separator()     -> linea divisoria
+# ui.dialog()        -> finestra pop-up/modal per conferme, form, ecc.
+# ui.add_head_html() -> aggiunge CSS/HTML nel <head>
+# ui.add_body_html() -> aggiunge HTML nella <body>
+# ui.add_js_file('x.js'), ui.add_css_file('x.css') -> aggiunge file esterni

@@ -1,7 +1,7 @@
 class Notaio:
     def __init__(self, id, utente, codice_notarile, is_deleted=False):
         self.id = id
-        self.utente = utente  # dict o oggetto Utente
+        self.utente = utente
         self.codice_notarile = codice_notarile
         self.is_deleted = is_deleted
 
