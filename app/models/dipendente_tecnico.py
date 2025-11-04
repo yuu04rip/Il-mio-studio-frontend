@@ -6,7 +6,7 @@ class DipendenteTecnico:
         self.email = email
         self.numeroTelefonico = numeroTelefonico
         self.ruolo = ruolo
-        self.servizi = servizi or []  # lista di Servizio
+        self.servizi = servizi or []
         self.is_deleted = is_deleted
 
     @classmethod
