@@ -13,16 +13,39 @@ TIPI_DOCUMENTO = [
 ]
 
 def documentazione_page():
-    header("Documentazione personale")
+    ui.add_head_html("""
+<style>
+.q-uploader {
+    background: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+}
+.q-uploader__list {
+    display: none !important; /* nasconde il riquadro bianco */
+}
+.custom-uploader .q-uploader__header {
+    border: none !important;
+    box-shadow: none !important;
+}
+
+.custom-uploader {
+    background: linear-gradient(90deg, #2196f3 70%, #1976d2 100%) !important;
+    font-weight: 600 !important;
+    border-radius: 2.5em !important;
+    box-shadow: 0 10px 32px 0 #1976d222, 0 2px 10px 0 #00000012 !important;
+}
+
+</style>
+""")
     user = api_session.user
     cliente_id = user.get('id') if user else None
     if not cliente_id:
         ui.label('Utente non autenticato').classes('text-negative')
         return
 
-    with ui.card().classes('q-pa-xl q-mt-xl q-mx-auto shadow-5').style('max-width:640px;background:#fafdff;'):
-        ui.label('Gestisci i tuoi documenti personali').classes('text-h5 q-mb-xl').style(
-            'background:#1976d2;color:white;border-radius:2em;padding:.6em 2.5em;display:block;text-align:center;font-weight:600;letter-spacing:0.04em;'
+    with ui.card().classes('q-pa-xl q-mt-xl q-mx-auto shadow-5').style('max-width:640px;background: rgba(240,240,240) !important; box-shadow: 0 10px 32px 0 #1976d222, 0 2px 10px 0 #00000012 !important;  border-radius: 2.5em !important;  align-items:center;'):
+        ui.label('Documenti personali').classes('text-h5 q-mb-xl').style(
+            'background: linear-gradient(90deg, #2196f3 70%, #1976d2 100%) !important;;color:white;border-radius:2em;padding:.6em 2.5em;display:block;text-align:center;font-weight:600;letter-spacing:0.04em;'
         )
 
         with ui.row().classes('q-mb-lg').style('justify-content:center;'):
@@ -34,7 +57,7 @@ def documentazione_page():
                 label='Carica documento',
                 auto_upload=True,
                 on_upload=lambda e: upload_documento(e, cliente_id, selected_tipo.value, after_upload)
-            ).props('accept=.pdf,.jpg,.jpeg,.png color=primary flat').classes('q-px-md')
+            ).props('accept=.pdf,.jpg,.jpeg,.png flat').classes('custom-uploader')
 
         ui.separator().classes('q-my-lg')
         doc_list = ui.column().classes('full-width').style('gap:20px;')
@@ -48,7 +71,7 @@ def documentazione_page():
 
         def refresh_docs():
             doc_list.clear()
-            res = api_session.get(f'/studio/documenti/visualizza/{cliente_id}')
+            res = api_session.get(f'/documentazione/documenti/visualizza/{cliente_id}')
             if res.status_code == 200:
                 docs = res.json()
                 docs = [doc for doc in docs if not doc.get("is_deleted", False)]
@@ -121,7 +144,7 @@ async def upload_documento(event, cliente_id, tipo, callback):
     data = {'cliente_id': str(cliente_id), 'tipo': tipo}
     headers = api_session.get_headers() if hasattr(api_session, 'get_headers') else {}
     try:
-        resp = requests.post(f"{API_BASE_URL}/studio/documenti/carica", data=data, files=files, headers=headers)
+        resp = requests.post(f"{API_BASE_URL}/documentazione/documenti/carica", data=data, files=files, headers=headers)
         if callback:
             callback(resp.status_code == 200)
     except Exception:
@@ -136,7 +159,7 @@ def sostituisci_documento(doc_id, refresh_callback):
         files = {'file': (filename, content, mimetype)}
         headers = api_session.get_headers() if hasattr(api_session, 'get_headers') else {}
         try:
-            resp = requests.put(f"{API_BASE_URL}/studio/documenti/sostituisci/{doc_id}", files=files, headers=headers)
+            resp = requests.put(f"{API_BASE_URL}/documentazione/documenti/sostituisci/{doc_id}", files=files, headers=headers)
             if resp.status_code == 200:
                 ui.notify("Documento sostituito!", color='positive')
             else:

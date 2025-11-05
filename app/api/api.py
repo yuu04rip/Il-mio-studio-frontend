@@ -97,28 +97,6 @@ class APIClient:
         resp.raise_for_status()
         return resp.json()
 
-    # --- DOCUMENTAZIONE ---
-    def carica_documentazione(self, cliente_id, tipo, filepath):
-        url = f"{API_BASE}/studio/documenti/carica"
-        files = {'file': open(filepath, 'rb')}
-        data = {'cliente_id': cliente_id, 'tipo': tipo}
-        resp = requests.post(url, data=data, files=files, headers=self._headers())
-        resp.raise_for_status()
-        return resp.json()
-
-    def visualizza_documentazione(self, cliente_id):
-        url = f"{API_BASE}/studio/documenti/visualizza/{cliente_id}"
-        resp = requests.get(url, headers=self._headers())
-        resp.raise_for_status()
-        return resp.json()
-
-    def sostituisci_documentazione(self, doc_id, filepath):
-        url = f"{API_BASE}/studio/documenti/sostituisci/{doc_id}"
-        files = {'file': open(filepath, 'rb')}
-        resp = requests.put(url, files=files, headers=self._headers())
-        resp.raise_for_status()
-        return resp.json()
-
     # --- SERVIZI ---
     def archivia_servizio(self, servizio_id):
         resp = requests.post(f"{API_BASE}/studio/servizi/{servizio_id}/archivia", headers=self._headers())
@@ -302,7 +280,7 @@ class APIClient:
         return resp.content
 
     def carica_documentazione_cliente(self, cliente_id, tipo, filepath):
-        url = f"{API_BASE}/studio/documenti/carica"
+        url = f"{API_BASE}/documentazione/documenti/carica"
         files = {"file": open(filepath, "rb")}
         data = {"cliente_id": cliente_id, "tipo": tipo}
         resp = requests.post(url, data=data, files=files, headers=self._headers())
@@ -310,13 +288,13 @@ class APIClient:
         return resp.json()
 
     def visualizza_documentazione_cliente(self, cliente_id):
-        url = f"{API_BASE}/studio/documenti/visualizza/{cliente_id}"
+        url = f"{API_BASE}/documentazione/documenti/visualizza/{cliente_id}"
         resp = requests.get(url, headers=self._headers())
         resp.raise_for_status()
         return resp.json()
 
     def sostituisci_documentazione_cliente(self, doc_id, filepath):
-        url = f"{API_BASE}/studio/documenti/sostituisci/{doc_id}"
+        url = f"{API_BASE}/documentazione/documenti/sostituisci/{doc_id}"
         files = {"file": open(filepath, "rb")}
         resp = requests.put(url, files=files, headers=self._headers())
         resp.raise_for_status()
