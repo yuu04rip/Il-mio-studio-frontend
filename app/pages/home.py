@@ -1,7 +1,72 @@
 from nicegui import ui
-from app.pages.cliente.chatbox import chatbox
+from app.api.api import api_session
+from .chatbox import chatbox  # importa la chat
 
 def home_cliente(cliente_id: int):
+
+    ui.add_head_html("""
+    <style>
+    /* 🧱 CARD PRINCIPALE (contenitore centrale) */
+    .q-card {
+        background: rgb(240, 240, 240) !important;
+        border-radius: 18px !important;
+        box-shadow: 0 8px 24px rgba(0, 0, 0) !important;
+        padding: 48px !important;
+        width: 80% !important;
+        max-width: 1000px !important;
+        min-height: 600px !important;
+        margin: 60px auto !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: center !important;
+        align-items: center !important;
+        transition: all 0.4s ease-in-out !important;
+    }
+
+    /* 🔹 Stato normale (chat chiusa) */
+    .q-card.default {
+        transform: translateY(0);
+    }
+
+    /* 🔹 Stato con chat aperta */
+    .q-card.chat-open {
+        width: 90% !important;
+        max-width: 1200px !important;
+        min-height: 800px !important;
+        transform: translateY(-50px);
+    }
+
+    /* 🔹 Sposta più in alto l’etichetta HOME */
+    .q-card.chat-open .text-h5 {
+        transform: translateY(-60px);
+        transition: transform 0.4s ease;
+    }
+
+    /* 🔹 Pulsanti si abbassano leggermente */
+    .q-card.chat-open .q-row:nth-of-type(2),
+    .q-card.chat-open .q-row:nth-of-type(3) {
+        transform: translateY(20px);
+        transition: transform 0.4s ease;
+    }
+    </style>
+    """)
+
+    # 🧱 Contenitore principale
+    with ui.card().classes('q-pa-xl q-mt-xl q-mx-auto default'):
+        ui.label('HOME').classes('text-h5 q-mb-lg')
+
+        with ui.row().classes('q-gutter-md q-mb-lg'):
+            ui.button('Servizi', on_click=lambda: ui.notify('Azione Servizi'))
+            ui.button('Documenti', on_click=lambda: ui.notify('Azione Documenti'))
+
+        with ui.row().classes('q-gutter-md'):
+            ui.button('Pagamenti', on_click=lambda: ui.notify('Azione Pagamenti'))
+            ui.button('Profilo', on_click=lambda: ui.notify('Azione Profilo'))
+
+    # 💬 Aggiungi la chatbox
+    chatbox(cliente_id)
+
+
     with ui.card().classes('q-pa-xl q-mt-xl q-mx-auto'):
         ui.label('HOME').classes('text-h5 q-mb-lg').style(
             'background:#2196f3;color:white;border-radius:2em;padding:.5em 3em;display:block;text-align:center;'
@@ -47,3 +112,5 @@ def home_notaio():
                 .classes('q-pa-xl').style('min-width:160px;font-weight:600;font-size:1.08em;')
             ui.button('ACCETTAZIONE', icon='check', on_click=lambda: ui.navigate.to('/accettazione')) \
                 .classes('q-pa-xl').style('min-width:160px;font-weight:600;font-size:1.08em;')
+            
+
