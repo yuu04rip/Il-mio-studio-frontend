@@ -1,18 +1,20 @@
 from nicegui import ui
 from app.api.api import api_session
 
+
 def login_page():
-    with ui.element("div").classes("auth-absolute-center"):
-        with ui.card().classes('auth-modern-card shadow-8').style('max-width:410px;min-width:320px;padding:0;overflow:hidden;'):
+     ui.add_head_html('<link rel="stylesheet" href="/static/styles.css">')
+     with ui.column().classes('items-center justify-center w-full').style('display:flex;height:100vh;'):
+        with ui.card().classes('auth-modern-card shadow-8').style('max-width:420px;min-width:320px;padding:0;overflow:hidden;align-items:center;'):
             with ui.column().classes('items-center').style('padding:0;'):
-                ui.icon('login').style('font-size:3.0em;color:#1976d2;margin-top:38px;')
+                ui.icon('login').style('font-size:3.0em;color:#1976d2;margin-top:30px;')
                 ui.label('Accedi').classes('auth-modern-title').style('margin-top:8px;margin-bottom:15px;font-size:2.05em;font-weight:700;letter-spacing:0.04em;')
                 ui.separator().style("width:100%;margin-bottom:20px;")
                 with ui.column().classes('justify-center items-center').style('width:82%;gap:18px;'):
                     ruolo = ui.select(
                         options=['CLIENTE', 'DIPENDENTE', 'NOTAIO'],
                         label='Ruolo'
-                    ).props('outlined dense').classes('auth-modern-input')
+                    ).props('outlined dense').classes('auth-modern-input').style("align-self:flex-start;")
                     email = ui.input('Email').props('outlined dense type=email').classes('auth-modern-input')
                     password = ui.input('Password', password=True).props('outlined dense').classes('auth-modern-input')
                     codice_notarile_row = ui.row().classes('w-full justify-center')
@@ -81,8 +83,9 @@ def login_page():
                 ui.label("© 2025 Il Mio Studio").style("color:#b0b7c3;margin:23px 0 10px 0;font-size:.98em;")
 
 def register_page():
-    with ui.element("div").classes("auth-absolute-center"):
-        with ui.card().classes('auth-modern-card shadow-8').style('max-width:410px;min-width:320px;padding:0;overflow:hidden;'):
+     ui.add_head_html('<link rel="stylesheet" href="/static/styles.css">')
+     with ui.column().classes('items-center justify-center w-full').style('display:flex;height:100vh;'):
+        with ui.card().classes('auth-modern-card shadow-8').style('max-width:410px;min-width:320px;padding:0;overflow:hidden;align-items:center;'):
             with ui.column().classes('items-center').style('padding:0;'):
                 ui.icon('person_add').style('font-size:3.0em;color:#1976d2;margin-top:38px;')
                 ui.label('Registrati').classes('auth-modern-title').style('margin-top:8px;margin-bottom:15px;font-size:2.05em;font-weight:700;letter-spacing:0.04em;')
@@ -142,8 +145,9 @@ def register_page():
 
 
 def change_password_page():
-    with ui.element("div").classes("auth-absolute-center"):
-        with ui.card().classes('auth-modern-card shadow-8').style('max-width:410px;min-width:320px;padding:0;overflow:hidden;'):
+    ui.add_head_html('<link rel="stylesheet" href="/static/styles.css">')
+    with ui.column().classes('items-center justify-center w-full').style('display:flex;height:100vh;'):
+        with ui.card().classes('auth-modern-card shadow-8').style('max-width:410px;min-width:320px;padding:0;overflow:hidden;align-items:center;'):
             with ui.column().classes('items-center').style('padding:0;'):
                 ui.icon('vpn_key').style('font-size:3.0em;color:#1976d2;margin-top:38px;')
                 ui.label('Recupero/Cambio password').classes('auth-modern-title').style('margin-top:8px;margin-bottom:15px;font-size:1.55em;font-weight:700;letter-spacing:0.04em;')
@@ -183,97 +187,3 @@ def change_password_page():
                 ui.label("© 2025 Il Mio Studio").style("color:#b0b7c3;margin:23px 0 10px 0;font-size:.98em;")
 
 
-    ui.add_head_html("""
-<style>
-html, body {
-    height: 100%;
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-body { background: linear-gradient(107deg, #fafdff 0%, #e5eefc 100%); }
-.auth-absolute-center {
-    position: fixed;
-    inset: 0;
-    width: 100vw;
-    height: 100vh;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    background: none;
-    z-index: 10;
-}
-.auth-modern-card {
-    background: rgba(255,255,255,0.95) !important;
-    box-shadow: 0 10px 32px 0 #1976d222, 0 2px 10px 0 #00000012 !important;
-    border-radius: 2.5em !important;
-    border: 1.7px solid #e3eaf1 !important;
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-    overflow: hidden;
-    margin: auto;
-    max-width: 410px;
-    width: 100%;
-}
-.auth-modern-title {
-    background: none !important;
-    color: #1976d2 !important;
-    font-family: 'Segoe UI', 'Roboto', sans-serif;
-    font-weight: 600;
-    letter-spacing: 0.03em;
-    text-align: center;
-    margin-top: 0;
-    margin-bottom: 11px;
-    width: fit-content;
-    display: block;
-}
-.auth-modern-input input, .auth-modern-input .q-field__native {
-    background: #f7fafd !important;
-    border-radius: 1.25em !important;
-    font-size:1.09em;
-    min-height:44px;
-    border: 1.2px solid #e3eaf1 !important;
-    box-shadow: none !important;
-}
-.auth-modern-input input:focus, .auth-modern-input .q-field__native:focus {
-    border: 1.2px solid #1976d2 !important;
-}
-.auth-modern-btn {
-    font-size: 1.12em !important;
-    font-weight: 600;
-    border-radius: 1.8em !important;
-    background: linear-gradient(90deg, #2196f3 70%, #1976d2 100%) !important;
-    color: #fff !important;
-    box-shadow: 0 4px 16px 0 #2196f341;
-    padding: 0.95em 0 !important;
-    margin-top: 10px;
-    width: 100%;
-    transition: background .17s, box-shadow .16s, transform .14s;
-    border: none !important;
-}
-.auth-modern-btn:hover, .auth-modern-btn:focus {
-    background: linear-gradient(90deg, #1976d2 50%, #2196f3 100%) !important;
-    color: #fff !important;
-    box-shadow: 0 6px 22px 0 #1976d249;
-    outline: none;
-    transform: scale(1.035);
-}
-.auth-modern-link {
-    font-size:1.04em !important;
-    color: #1976d2 !important;
-    font-weight: 500;
-    text-align: center;
-    border-radius: 2.2em;
-    background: transparent !important;
-    margin-top: 2px;
-    margin-bottom: 2px;
-    width: 100% !important;
-    transition: color .13s, background .13s;
-}
-.auth-modern-link:hover {
-    text-decoration: underline !important;
-    color: #0d47a1 !important;
-    background: #e3f1fd !important;
-}
-</style>
-""")

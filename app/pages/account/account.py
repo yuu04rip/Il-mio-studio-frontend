@@ -37,7 +37,7 @@ def account_page():
 
     ui.add_head_html("""
     <style>
-    body { background: linear-gradient(115deg, #e3f0fc 0%, #f7faff 90%); }
+    body { background: linear-gradient(115deg, #e3f0fe 0%, #f7faff 90%); }
     .glass-card {
         background: rgba(242, 247, 252, 0.72) !important;
         box-shadow: 0 8px 32px 0 #1976d211, 0 1.5px 7px 0 #00000006 !important;
