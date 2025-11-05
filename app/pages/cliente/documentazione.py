@@ -48,7 +48,7 @@ def documentazione_page():
 
         def refresh_docs():
             doc_list.clear()
-            res = api_session.get(f'/studio/documenti/visualizza/{cliente_id}')
+            res = api_session.get(f'/documentazione/documenti/visualizza/{cliente_id}')
             if res.status_code == 200:
                 docs = res.json()
                 docs = [doc for doc in docs if not doc.get("is_deleted", False)]
@@ -121,7 +121,7 @@ async def upload_documento(event, cliente_id, tipo, callback):
     data = {'cliente_id': str(cliente_id), 'tipo': tipo}
     headers = api_session.get_headers() if hasattr(api_session, 'get_headers') else {}
     try:
-        resp = requests.post(f"{API_BASE_URL}/studio/documenti/carica", data=data, files=files, headers=headers)
+        resp = requests.post(f"{API_BASE_URL}/documentazione/documenti/carica", data=data, files=files, headers=headers)
         if callback:
             callback(resp.status_code == 200)
     except Exception:
@@ -136,7 +136,7 @@ def sostituisci_documento(doc_id, refresh_callback):
         files = {'file': (filename, content, mimetype)}
         headers = api_session.get_headers() if hasattr(api_session, 'get_headers') else {}
         try:
-            resp = requests.put(f"{API_BASE_URL}/studio/documenti/sostituisci/{doc_id}", files=files, headers=headers)
+            resp = requests.put(f"{API_BASE_URL}/documentazione/documenti/sostituisci/{doc_id}", files=files, headers=headers)
             if resp.status_code == 200:
                 ui.notify("Documento sostituito!", color='positive')
             else:
