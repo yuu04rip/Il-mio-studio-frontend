@@ -5,13 +5,14 @@ from app.models.servizio import Servizio
 def servizio_cliente_dettagli_page(cliente_id: int, servizio_id: int):
     """Pagina dettagli servizio per il cliente"""
 
-    with ui.card().classes('q-pa-xl q-mt-xl q-mx-auto').style('max-width: 800px;'):
+    with ui.card().classes('q-pa-xl q-mt-xl q-mx-auto').style('max-width: 800px;background:#f0f0f0;border-radius:2.5em;'):
         with ui.row().classes('items-center q-mb-lg'):
             ui.button(
                 icon='arrow_back',
                 on_click=lambda: ui.navigate.to(f'/servizi_cliente/{cliente_id}')
-            ).classes('q-mr-md')
-            ui.label('DETTAGLI SERVIZIO').classes('text-h4 text-weight-bold')
+            ).classes('q-mr-md').style('background: linear-gradient(90deg, #2196f3 70%, #1976d2 100%) !important;color:#fff !important;margin-left:1em;margin-top:0.5em;'
+                    'border-radius:1.8em;')
+            ui.label('DETTAGLI SERVIZIO').classes('glass-label').style('color:#1976d2;text-align:center;font-size:2.5em;font-weight:bold;margin-bottom:20px;margin-top:0.5em;')
 
         try:
             servizio_data = api_session.get(f'/studio/servizi/{servizio_id}')
