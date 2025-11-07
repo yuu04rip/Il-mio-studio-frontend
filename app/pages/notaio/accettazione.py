@@ -38,35 +38,46 @@ def accettazione_notaio_page():
             cliente_id_input = ui.input('ID Cliente').props('outlined dense type=number').classes('q-mb-sm')
             tipo_input = ui.select(TIPI_SERVIZIO, label="Tipo servizio").props("outlined dense").classes("q-mb-sm")
             codice_corrente_input = ui.input('Codice corrente').props('outlined dense').classes('q-mb-sm')
-            codice_servizio_input = ui.input('Codice servizio').props('outlined dense').classes('q-mb-sm')
+            # rimosso input codice_servizio_input: il codice ufficiale viene generato dal backend
             msg_crea = ui.label().classes('text-negative q-mb-sm')
             user = api_session.user
             dipendente_id = api_session.get_dipendente_id_by_user(user['id']) if user else None
 
             def submit_servizio():
-                if not (cliente_id_input.value and tipo_input.value and codice_corrente_input.value and codice_servizio_input.value):
+                # validazioni di base
+                if not (cliente_id_input.value and tipo_input.value and codice_corrente_input.value):
                     msg_crea.text = 'Compila tutti i campi!'
                     return
                 try:
-                    resp = api_session.post(
-                        '/studio/servizi',
-                        json={
-                            "cliente_id": int(cliente_id_input.value),
-                            "tipo": tipo_input.value,
-                            "codiceCorrente": int(codice_corrente_input.value),
-                            "codiceServizio": int(codice_servizio_input.value),
-                            "dipendente_id": dipendente_id
-                        }
-                    )
+                    # assicurati che codiceCorrente sia intero
+                    try:
+                        codice_corrente_val = int(codice_corrente_input.value)
+                    except Exception:
+                        msg_crea.text = 'Codice corrente deve essere un numero intero'
+                        return
+
+                    payload = {
+                        "cliente_id": int(cliente_id_input.value),
+                        "tipo": tipo_input.value,
+                        "codiceCorrente": int(codice_corrente_val),
+                        "dipendente_id": dipendente_id
+                    }
+                    # invia la creazione senza codiceServizio: il backend lo genera automaticamente
+                    resp = api_session.post('/studio/servizi', json=payload)
                     if resp.status_code == 200:
                         servizio = resp.json()
-                        servizio_id = servizio["id"]
+                        servizio_id = servizio.get("id")
+                        codice_generato = servizio.get("codiceServizio") or servizio.get("codice_servizio")
+                        # imposta lo stato APPROVATO
                         patch_resp = api_session.patch(
                             f"/studio/servizi/{servizio_id}",
                             {"statoServizio": "APPROVATO"}
                         )
                         if patch_resp.status_code == 200:
-                            ui.notify('Servizio creato e approvato!', color='positive')
+                            if codice_generato:
+                                ui.notify(f'Servizio creato e approvato! Codice: {codice_generato}', color='positive')
+                            else:
+                                ui.notify('Servizio creato e approvato!', color='positive')
                             aggiungi_servizio_dialog.close()
                             update_servizi()
                         else:
@@ -76,8 +87,8 @@ def accettazione_notaio_page():
                 except Exception as e:
                     msg_crea.text = f'Errore: {e}'
 
-            ui.button('Crea', on_click=submit_servizio).classes('q-mt-md q-pa-md')
-            ui.button('Annulla', on_click=lambda: aggiungi_servizio_dialog.close()).classes('q-ml-md q-pa-md')
+            ui.button('Crea', on_click=submit_servizio).props('type="button"').classes('q-mt-md q-pa-md')
+            ui.button('Annulla', on_click=lambda: aggiungi_servizio_dialog.close()).props('type="button"').classes('q-ml-md q-pa-md')
 
     def stato(servizio):
         return str(servizio.get('statoServizio', '')).strip().lower()
@@ -108,18 +119,18 @@ def accettazione_notaio_page():
                         ).classes('text-body1 q-mb-xs')
                         with ui.row().style('gap:8px;'):
                             ui.button('Accetta', icon='check', color='positive',
-                                      on_click=lambda id=servizio['id']: accetta_servizio(id)).props('flat round')
+                                      on_click=lambda id=servizio['id']: accetta_servizio(id)).props('flat round type="button"')
                             ui.button('Rifiuta', icon='close', color='negative',
-                                      on_click=lambda id=servizio['id']: rifiuta_servizio(id)).props('flat round')
+                                      on_click=lambda id=servizio['id']: rifiuta_servizio(id)).props('flat round type="button"')
                             ui.button('Documenti', icon='folder', color='accent',
-                                      on_click=lambda id=servizio['id']: visualizza_documenti(id)).props('flat round')
+                                      on_click=lambda id=servizio['id']: visualizza_documenti(id)).props('flat round type="button"')
             else:
                 ui.button(
                     'Aggiungi Servizio',
                     icon='add',
                     color='info',
                     on_click=lambda: aggiungi_servizio_dialog.open()
-                ).classes('q-mb-lg q-pa-md')
+                ).props('type="button"').classes('q-mb-lg q-pa-md')
 
                 revisionati = [s for s in servizi if stato(s) in ('approvato', 'rifiutato')]
                 if not revisionati:
@@ -131,9 +142,9 @@ def accettazione_notaio_page():
                         ).classes('text-body1 q-mb-xs')
                         with ui.row().style('gap:8px;'):
                             ui.button('Documenti', icon='folder', color='accent',
-                                      on_click=lambda id=servizio['id']: visualizza_documenti(id)).props('flat round')
+                                      on_click=lambda id=servizio['id']: visualizza_documenti(id)).props('flat round type="button"')
                             ui.button('Dettagli', icon='info', color='primary',
-                                      on_click=lambda id=servizio['id']: visualizza_dettagli(id)).props('flat round')
+                                      on_click=lambda id=servizio['id']: visualizza_dettagli(id)).props('flat round type="button"')
 
     def accetta_servizio(servizio_id):
         try:
