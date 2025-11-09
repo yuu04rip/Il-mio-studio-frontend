@@ -2,6 +2,9 @@ from nicegui import ui
 from app.api.api import api_session
 
 def clienti_page():
+
+
+
     ui.label('Clienti').classes('text-h5 q-mt-xl q-mb-lg').style(
         'background:#1976d2;color:white;border-radius:2em;padding:.5em 2.5em;display:block;text-align:center;font-weight:600;letter-spacing:0.04em;'
     )
