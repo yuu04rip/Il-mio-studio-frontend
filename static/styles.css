@@ -20,7 +20,6 @@ body { background: linear-gradient(107deg, #fafdff 0%, #e5eefc 100%); }
     height: 100vh;
     background: none;
     z-index: 10;
-    align-items:center;
 }
 .auth-modern-card {
     background: rgba(240,240,240) !important;
@@ -47,18 +46,20 @@ body { background: linear-gradient(107deg, #fafdff 0%, #e5eefc 100%); }
     width: fit-content;
     display: block;
 }
-.auth-modern-input input, .auth-modern-input .q-field__native {
-    background: trasparent !important;
-    border-radius: 1.25em !important;
-    font-size:1.09em;
-    min-height:44px;
-    border: 1.2px solid trasparent !important;
-    box-shadow: none !important;
+.auth-modern-input input, .auth-modern-input .q-field__native { 
+    background: transparent !important; 
+    border-radius: 0 !important; 
+    font-size: 1.09em; 
+    min-height: 30px; 
+    border: none solid transparent !important; 
+    box-shadow: none !important; 
+    width: 100% !important; 
+    box-sizing: border-box !important
+} 
+.auth-modern-input.q-field--focused .q-field__control { 
+    border-color: #1976d2 !important; 
 }
-.auth-modern-input.q-field--focused .q-field__control {
-    border-color: #1976d2 !important;
-}
-
+    
 .auth-modern-btn {
     font-size: 1.12em !important;
     font-weight: 600;
