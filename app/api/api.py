@@ -185,14 +185,13 @@ class APIClient:
         resp.raise_for_status()
         return resp.json()
 
-    def crea_servizio(self, cliente_id, tipo, codice_corrente, codice_servizio, dipendente_id):
+    def crea_servizio(self, cliente_id, tipo, codice_corrente, dipendente_id):
         url = f"{API_BASE}/studio/servizi"
         data = {
             "cliente_id": int(cliente_id),
             "tipo": tipo,
             "codiceCorrente": int(codice_corrente),
-            "codiceServizio": int(codice_servizio),
-            "dipendente_id": int(dipendente_id)
+            "dipendente_id": int(dipendente_id) if dipendente_id is not None else None
         }
         resp = requests.post(url, json=data, headers=self._headers())
         resp.raise_for_status()
