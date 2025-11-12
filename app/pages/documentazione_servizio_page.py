@@ -260,7 +260,7 @@ def _render_doc_row(doc: dict, container, is_service: bool = False, servizio_id:
     ext = str(filename).split('.')[-1].lower() if filename and '.' in filename else ''
     tipo_icon = "description"
     with container:
-        with ui.card().style('background:#f4f7fb;border-radius:1.5em;min-height:72px;padding:1em 1.4em;margin-bottom:8px;'):
+        with ui.card().style('background:#f4f7fb;border-radius:1.5em;min-height:108px;padding:1.5em 2em;box-shadow:0 2px 14px 0 #0001;display:flex;align-items:center;max-width:800px;width:100%;'):
             with ui.row().classes('items-center').style('width:100%;gap:12px;'):
                 ui.icon(tipo_icon).style('font-size:1.8em;color:#1976d2;margin-right:12px;')
                 with ui.column().style('flex:1;text-align:left;'):
@@ -298,12 +298,18 @@ def documentazione_servizio_page(servizio_id: Optional[int] = None):
 .q-uploader__list {
     display: none !important; /* nasconde il riquadro bianco */
 }
-.custom-uploader .q-uploader__header {
-    border: none !important;
-    box-shadow: none !important;
+.custom-uploader .q-uploader__header-content {
+    display: flex !important;          /* esempio */
+    justify-content: center !important;
+    align-items: center !important;
+    background: linear-gradient(90deg, #1976d2 70%, #0d47a1 100%) !important;
+    color: white !important;
+    font-weight: 600 !important;
+    border-radius: 2.5em !important;
 }
-.custom-uploader {
-    background: linear-gradient(90deg, #2196f3 70%, #1976d2 100%) !important;
+
+.custom-uploader  .q-uploader__header{
+    background: trasparent !important;
     font-weight: 600 !important;
     border-radius: 2.5em !important;
     box-shadow: 0 10px 32px 0 #1976d222, 0 2px 10px 0 #00000012 !important;
@@ -320,7 +326,6 @@ def documentazione_servizio_page(servizio_id: Optional[int] = None):
 }
 </style>
 """)
-    header('Documentazione' + (f' servizio #{servizio_id}' if servizio_id else ''))
     user = api_session.user
     cliente_id = user.get('id') if user else None
     if not cliente_id and servizio_id is None:
@@ -332,14 +337,12 @@ def documentazione_servizio_page(servizio_id: Optional[int] = None):
             'box-shadow: 0 10px 32px 0 #1976d222, 0 2px 10px 0 #00000012 !important; '
             'border-radius: 2.5em !important; align-items:center;'
     ):
-        ui.label('Documentazione').classes('text-h5 q-mb-xl').style(
-            'background: linear-gradient(90deg, #2196f3 70%, #1976d2 100%) !important;'
-            'color:white;border-radius:2em;padding:.6em 2.5em;display:block;text-align:center;'
-            'font-weight:600;letter-spacing:0.04em;'
+        ui.label('Documentazione' + (f' servizio #{servizio_id}' if servizio_id else '')).classes('text-h5 q-mb-xl').style(
+            'background: trasporant !importtant;color:#1976d2;border-radius:2em;padding:.6em 2.5em;display:block;text-align:center;font-weight:600;letter-spacing:0.04em;font-size:2rem;'
         )
 
         # upload area
-        with ui.row().classes('q-mb-lg').style('justify-content:center;'):
+        with ui.row().classes('q-mb-lg').style('justify-content:center;align-items:center;'):
             # choose correct tipi list depending on whether we're in servizio context
             tipi_opts = TIPI_DOCUMENTO_SERVIZIO if servizio_id else TIPI_DOCUMENTO
             selected_tipo = ui.select(options={d["value"]: d["label"] for d in tipi_opts}, label='Tipo documento').props('outlined dense').classes('q-mr-md').style('min-width:220px;max-width:240px;')

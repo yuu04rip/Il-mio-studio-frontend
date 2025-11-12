@@ -23,6 +23,7 @@ TIPI_DOCUMENTO = [
     {"label": "Tessera sanitaria", "value": "tessera_sanitaria", "icon": "medical_information"},
     {"label": "Patente", "value": "patente", "icon": "directions_car"},
 ]
+upload_containers = {}
 
 
 def documentazione_page():
@@ -36,13 +37,18 @@ def documentazione_page():
 .q-uploader__list {
     display: none !important; /* nasconde il riquadro bianco */
 }
-.custom-uploader .q-uploader__header {
-    border: none !important;
-    box-shadow: none !important;
+.custom-uploader .q-uploader__header-content {
+    display: flex !important;          /* esempio */
+    justify-content: center !important;
+    align-items: center !important;
+    background: linear-gradient(90deg, #1976d2 70%, #0d47a1 100%) !important;
+    color: white !important;
+    font-weight: 600 !important;
+    border-radius: 2.5em !important;
 }
 
-.custom-uploader {
-    background: linear-gradient(90deg, #2196f3 70%, #1976d2 100%) !important;
+.custom-uploader  .q-uploader__header{
+    background: transparent !important;
     font-weight: 600 !important;
     border-radius: 2.5em !important;
     box-shadow: 0 10px 32px 0 #1976d222, 0 2px 10px 0 #00000012 !important;
@@ -57,28 +63,24 @@ def documentazione_page():
         return
 
     with ui.card().classes('q-pa-xl q-mt-xl q-mx-auto shadow-5').style(
-            'max-width:640px;background: rgba(240,240,240) !important; '
-            'box-shadow: 0 10px 32px 0 #1976d222, 0 2px 10px 0 #00000012 !important; '
-            'border-radius: 2.5em !important; align-items:center;'
+            'max-width:540px;background: rgba(240,240,240) !important; box-shadow: 0 10px 32px 0 #1976d222, 0 2px 10px 0 #00000012 !important;  border-radius: 2.5em !important;  align-items:center;'
     ):
         ui.label('Documenti personali').classes('text-h5 q-mb-xl').style(
-            'background: linear-gradient(90deg, #2196f3 70%, #1976d2 100%) !important;'
-            'color:white;border-radius:2em;padding:.6em 2.5em;display:block;text-align:center;'
-            'font-weight:600;letter-spacing:0.04em;'
+            'background: trasporant !importtant;color:#1976d2;border-radius:2em;padding:.6em 2.5em;display:block;text-align:center;font-weight:600;letter-spacing:0.04em;font-size:2rem;'
         )
 
         with ui.row().classes('q-mb-lg').style('justify-content:center;'):
             selected_tipo = ui.select(
                 options={d["value"]: d["label"] for d in TIPI_DOCUMENTO},
                 label='Tipo documento'
-            ).props('outlined dense').classes('q-mr-md').style('min-width:220px;max-width:240px;')
+            ).props('outlined dense').classes('q-mr-md').style('min-width:260px;max-width:300px;margin-bottom:10px;')
             ui.upload(
                 label='Carica documento',
                 auto_upload=True,
                 on_upload=lambda e: upload_documento(e, cliente_id, selected_tipo.value, after_upload)
             ).props('accept=.pdf,.jpg,.jpeg,.png flat').classes('custom-uploader')
 
-        ui.separator().classes('q-my-lg')
+        ui.separator().classes('q-my-lg').style('margin-bottom:10px;')
         doc_list = ui.column().classes('full-width').style('gap:20px;')
 
         def after_upload(success=True):
@@ -125,9 +127,10 @@ def documentazione_page():
                                             '', icon='download', color='primary',
                                             on_click=lambda d=doc: _proxy_download_doc(d)
                                         ).props('round flat size=lg').classes('action-btn')
+                                        upload_container = ui.column()
                                         ui.button(
                                             '', icon='upload', color='purple',
-                                            on_click=lambda d=doc: sostituisci_documento(d['id'], refresh_docs)
+                                            on_click=lambda d=doc, c=upload_container: sostituisci_documento(d['id'], refresh_docs,c)
                                         ).props('round flat size=lg').classes('q-ml-sm action-btn')
                 else:
                     with doc_list:
@@ -158,6 +161,7 @@ def documentazione_page():
 
 
 async def upload_documento(event, cliente_id, tipo, callback):
+    
     if not tipo:
         ui.notify("Seleziona il tipo di documento!", color='negative')
         if callback:
@@ -178,7 +182,28 @@ async def upload_documento(event, cliente_id, tipo, callback):
             callback(False)
 
 
-def sostituisci_documento(doc_id, refresh_callback):
+def sostituisci_documento(doc_id, refresh_callback,container):
+    container.clear()
+
+    ui.add_head_html("""
+    <style>
+    .custom-uploader-viola .q-uploader__header-content {
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        background: linear-gradient(90deg, #8e24aa 70%, #5e35b1 100%) !important;
+        color: white !important;
+        font-weight: 600 !important;
+        border-radius: 2.5em !important;
+    }
+    .custom-uploader-viola .q-uploader__header {
+        background: transparent !important;
+        font-weight: 600 !important;
+        border-radius: 2.5em !important;
+        box-shadow: 0 10px 32px 0 #1976d222, 0 2px 10px 0 #00000012 !important;
+    }
+    </style>
+    """)
     async def on_upload(event):
         filename = getattr(event.file, 'name', 'documento')
         mimetype = getattr(event, 'type', 'application/octet-stream')
@@ -193,10 +218,17 @@ def sostituisci_documento(doc_id, refresh_callback):
                 ui.notify("Errore nella sostituzione.", color='negative')
         except Exception:
             ui.notify("Errore nella sostituzione.", color='negative')
+
+        container.clear()
         refresh_callback()
-    ui.upload(label='Sostituisci documento', auto_upload=True, on_upload=on_upload).props(
-        'accept=.pdf,.jpg,.jpeg,.png color=accent flat'
-    )
+
+    with container:
+        ui.upload(
+            label='Sostituisci documento',
+            auto_upload=True,
+            on_upload=on_upload
+        ).props('accept=.pdf,.jpg,.jpeg,.png flat').classes('custom-uploader-viola')
+
 
 
 def _proxy_download_doc(doc: dict):
