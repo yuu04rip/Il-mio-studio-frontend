@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# -- coding: utf-8 --
 # Aggiornato: dedup delle suggestions + visualizzazione nome cognome email come "menu a tendina"
 from nicegui import ui, app
 from app.api.api import api_session
@@ -65,6 +65,50 @@ def _get_cliente_min_info(cliente_id: Optional[int]) -> dict:
 
 
 def servizi_dipendente_page():
+    ui.add_head_html("""
+<style>
+.custom-label {
+    font-weight: 600;
+    font-size: 2rem; /* aumentato da 1.2rem a 2rem */
+    color: #1976d2;
+    letter-spacing: 0.5px;
+    margin: 0;
+    padding: 0;
+    background: none;
+    box-shadow: none;
+}
+.custom-button-blue-light {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    background: linear-gradient(90deg, #2196f3 70%, #1976d2 100%) !important;
+    color: white !important;
+    font-weight: 600 !important;
+    border-radius: 2.5em !important;
+    padding: 0.8em 1.2em !important;
+    font-size: 1.2rem !important;
+    width: auto !important;
+    max-width: 300px !important;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2) !important;
+    letter-spacing: 0.5px !important;
+}
+.custom-button-blue-light-panels {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    background: linear-gradient(90deg, #2196f3 70%, #1976d2 100%) !important;
+    color: white !important;
+    font-weight: 600 !important;
+    border-radius: 2.5em !important;
+    padding: 0.8em 1.2em !important;
+    font-size: 1.2rem !important;
+    width: 100% !important;
+    max-width: 300px !important;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2) !important;
+    letter-spacing: 0.5px !important;
+}
+</style>
+    """)
     user = api_session.user
     dipendente_id = None
     if user:
@@ -89,15 +133,15 @@ def servizi_dipendente_page():
     SEARCH_MIN_LENGTH = 2  # non attivare il filtro per ricerche di 1 carattere
     DEBOUNCE_MS = 300
 
-    with ui.card().classes('q-pa-xl q-mt-xl q-mx-auto'):
-        with ui.row().classes('items-center q-mb-md'):
-            ui.icon('engineering', size='40px').classes('q-mr-md')
+    with ui.card().classes('q-pa-xl q-mt-xl q-mx-auto').style('width: 1150px;background: rgba(240,240,240) !important;box-shadow: 0 10px 32px 0 #1976d222, 0 2px 10px 0 #00000012 !important;border-radius: 2.5em !important;border: 1.7px solid #e3eaf1 !important;backdrop-filter: blur(6px);'):
+        with ui.row().classes('items-center q-mb-md').style('align-items: center; gap: 40px;justify-content: space-between;'):
+            ui.icon('engineering', size='40px').classes('q-mr-md').style('color:#1976d2')
             ui.label('SERVIZI DA SVOLGERE').classes(
-                'text-h5').style('background:#1a237e;color:white;border-radius:2em;padding:.5em 2em;')
+                'custom-label')
             search_box = ui.input('', placeholder="Cerca servizio...").props(
                 'dense').classes('q-ml-md').style('max-width:300px;')
             ui.button('Crea Servizio', icon='add',
-                      on_click=lambda: crea_servizio_dialog.open()).classes('q-ml-lg q-pa-md')
+                      on_click=lambda: crea_servizio_dialog.open()).classes('custom-button-blue-light')
 
         # Liste ORIGINALI - non vengono mai modificate dal filtro
         servizi_miei_originali = []
@@ -112,11 +156,11 @@ def servizi_dipendente_page():
 
         modifica_dialog = ui.dialog()
         with modifica_dialog:
-            with ui.card().classes('q-pa-md').style('max-width:400px;'):
-                ui.label('Modifica servizio').classes('text-h6 q-mb-md')
-                modifica_tipo_input = ui.select(TIPI_SERVIZIO, label="Tipo servizio").props("outlined dense").classes("q-mb-sm")
-                modifica_codice_corrente_input = ui.input('Codice corrente').props('outlined dense').classes('q-mb-sm')
-                modifica_codice_servizio_input = ui.input('Codice servizio').props('outlined dense').classes('q-mb-sm')
+            with ui.card().classes('q-pa-md').style('max-width:400px;align-items:center;width:100%'):
+                ui.label('Modifica servizio').classes('text-h6 q-mb-md').style('color: #1976d2')
+                modifica_tipo_input = ui.select(TIPI_SERVIZIO, label="Tipo servizio").props("outlined dense").classes("q-mb-sm").style("min-width:200px; max-width:300px;width:100%;")
+                modifica_codice_corrente_input = ui.input('Codice corrente').props('outlined dense').classes('q-mb-sm').style("min-width:200px; max-width:300px;width:100%;")
+                modifica_codice_servizio_input = ui.input('Codice servizio').props('outlined dense').classes('q-mb-sm').style("min-width:200px; max-width:300px;width:100%;")
                 msg_modifica = ui.label().classes('text-negative q-mb-sm')
                 servizio_corrente = {"id": None}
 
@@ -138,8 +182,8 @@ def servizi_dipendente_page():
                     except Exception as e:
                         msg_modifica.text = f'Errore: {e}'
 
-                ui.button('Salva', on_click=submit_modifica).classes('q-mt-md q-pa-md')
-                ui.button('Annulla', on_click=lambda: modifica_dialog.close()).classes('q-ml-md q-pa-md')
+                ui.button('Salva', on_click=submit_modifica).classes('custom-button-blue-light-panels')
+                ui.button('Annulla', on_click=lambda: modifica_dialog.close()).classes('custom-button-blue-light-panels')
 
         def apri_modifica(servizio):
             servizio_corrente["id"] = servizio.id
@@ -254,14 +298,14 @@ def servizi_dipendente_page():
                         ui.label(f"Stato: {servizio.statoServizio}").classes('text-subtitle2 q-mb-xs')
                     with ui.row().classes('q-gutter-md'):
                         if stato == 'creato':
-                            ui.button('Inizializza', icon='play_arrow', on_click=lambda s=servizio: inizializza_servizio(s.id)).classes('q-pa-md')
+                            ui.button('Inizializza', icon='play_arrow', on_click=lambda s=servizio: inizializza_servizio(s.id)).classes('custom-button-blue-light')
                         if stato == 'in_lavorazione':
-                            ui.button('Inoltra al notaio', icon='send', on_click=lambda s=servizio: inoltra_servizio_notaio(s.id)).classes('q-pa-md')
-                            ui.button('Modifica', icon='edit', on_click=lambda s=servizio: apri_modifica(s)).classes('q-pa-md')
-                            ui.button('Elimina', icon='delete', on_click=lambda s=servizio: elimina_servizio(s.id)).classes('q-pa-md')
+                            ui.button('Inoltra al notaio', icon='send', on_click=lambda s=servizio: inoltra_servizio_notaio(s.id)).classes('custom-button-blue-light')
+                            ui.button('Modifica', icon='edit', on_click=lambda s=servizio: apri_modifica(s)).classes('custom-button-blue-light')
+                            ui.button('Elimina', icon='delete', on_click=lambda s=servizio: elimina_servizio(s.id)).classes('custom-button-blue-light')
                         if stato in ['approvato', 'rifiutato', 'consegnato']:
                             ui.button('Visualizza dettagli', icon='visibility', on_click=lambda s=servizio: ui.navigate.to(f'/servizi/{s.id}/dettagli'))
-                        ui.button('Documentazione', icon='folder', on_click=lambda s=servizio: ui.navigate.to(f'/servizi/{s.id}/documenti')).classes('q-pa-md')
+                        ui.button('Documentazione', icon='folder', on_click=lambda s=servizio: ui.navigate.to(f'/servizi/{s.id}/documenti')).classes('custom-button-blue-light')
 
         def refresh_servizi_altri():
             collaborazioni_container.clear()
@@ -271,18 +315,29 @@ def servizi_dipendente_page():
                         "text-grey-7 q-mt-md").style("text-align:center;font-size:1.12em;")
                 return
 
-            for servizio in servizi_collaborazioni_display:
+            for servizio in servizi_collaborazioni_display:    
                 with collaborazioni_container:
-                    nome = getattr(servizio, 'clienteNome', None) or getattr(servizio, 'cliente_nome', None)
-                    cognome = getattr(servizio, 'clienteCognome', None) or getattr(servizio, 'cliente_cognome', None)
-                    if not nome and not cognome:
-                        cliente_info = _get_cliente_min_info(getattr(servizio, 'cliente_id', None))
-                        nome = cliente_info.get('nome', '')
-                        cognome = cliente_info.get('cognome', '')
+                    nome = (getattr(servizio, 'clienteNome', None) or 
+                        getattr(servizio, 'cliente_nome', '') or '')
+                    cognome = (getattr(servizio, 'clienteCognome', None) or 
+                       getattr(servizio, 'cliente_cognome', '') or '')
+
+            # Recupera informazioni aggiuntive se entrambi sono vuoti o se almeno uno manca
+                    cliente_id = getattr(servizio, 'cliente_id', None)
+                    if cliente_id and (not nome or not cognome):
+                        cliente_info = _get_cliente_min_info(cliente_id) or {}
+                        if not nome:
+                            nome = cliente_info.get('nome', '')
+                        if not cognome:
+                            cognome = cliente_info.get('cognome', '')
+
+                    # Costruzione della stringa finale
                     titolo_base = servizio.tipo or ''
                     titolo_cliente = f" di {nome} {cognome}".strip() if (nome or cognome) else ''
-                    ui.label(f"{titolo_base}{titolo_cliente} (Codice: {servizio.codiceServizio})").classes('text-h6 q-mb-sm')
-                    ui.button('Documentazione', icon='folder', on_click=lambda s=servizio: ui.navigate.to(f'/servizi/{s.id}/documenti')).classes('q-pa-md')
+
+                    # Label finale
+                    ui.label(f"{titolo_base}{titolo_cliente} (Codice: {getattr(servizio, 'codiceServizio', '')})").classes('text-h6 q-mb-sm')
+                    ui.button('Documentazione', icon='folder', on_click=lambda s=servizio: ui.navigate.to(f'/servizi/{s.id}/documenti')).classes('custom-button-blue-light')
 
         def filtra_servizi(testo_ricerca):
             testo = testo_ricerca.strip().lower()
@@ -314,11 +369,11 @@ def servizi_dipendente_page():
 
     # Definizione del dialog di creazione (popola il dialog precedentemente creato)
     with crea_servizio_dialog:
-        with ui.card().classes('q-pa-md').style('max-width:400px;'):
-            ui.label('Crea nuovo servizio').classes('text-h6 q-mb-md')
+        with ui.card().classes('q-pa-md').style('max-width:400px;width:100%; align-items:center;'):
+            ui.label('Crea nuovo servizio').classes('text-h6 q-mb-md').style('color: #1976d2')
 
             # Autocomplete / ricerca cliente
-            cliente_search_input = ui.input('Cerca cliente (nome o cognome)').props('outlined dense').classes('q-mb-sm')
+            cliente_search_input = ui.input('Cerca cliente (nome o cognome)').props('outlined dense').classes('q-mb-sm').style("min-width:200px; max-width:300px;width:100%;")
             # variabile Python per memorizzare l'id selezionato (evita hidden input)
             cliente_id_sel = {'id': None}
             cliente_selected_label = ui.label('').classes('q-mb-sm')
@@ -336,7 +391,7 @@ def servizi_dipendente_page():
                 """
                 suggestions_container.clear()
                 # rendi il contenitore visibile e con scroll
-                suggestions_container.style('background:#ffffff;border:1px solid #e0e0e0;border-radius:6px;max-height:220px;overflow:auto;padding:6px;')
+                suggestions_container.style('background:#E0F7FA;border:1px solid #E0F7FA;border-radius:6px;max-height:200px;overflow:auto;padding:6px;position:relative; top:-10px;max-width:300px;width:100%;')
                 seen = set()
                 if not results:
                     with suggestions_container:
@@ -386,7 +441,7 @@ def servizi_dipendente_page():
                         with ui.row().classes('items-center q-pa-sm').style('gap:12px;border-bottom:1px solid #f0f0f0;'):
                             ui.label(display_name).classes('text-body1')
                             if email:
-                                ui.label(email).classes('text-grey-6').style('margin-left:8px')
+                                ui.label(email).classes('text-grey-6')
                             # MODIFICA: Aggiungi explicitamente type="button" per prevenire il refresh della pagina
                             ui.button('Seleziona', on_click=lambda _=None, _p=pick_client: _p()).props('flat type="button"').classes('q-ml-auto')
 
@@ -413,8 +468,8 @@ def servizi_dipendente_page():
 
             cliente_search_input.on('update:model-value', on_cliente_search)
 
-            tipo_input = ui.select(TIPI_SERVIZIO, label="Tipo servizio").props("outlined dense").classes("q-mb-sm")
-            codice_corrente_input = ui.input('Codice corrente').props('outlined dense').classes('q-mb-sm')
+            tipo_input = ui.select(TIPI_SERVIZIO, label="Tipo servizio").props("outlined dense").classes("q-mb-sm").style("min-width:200px; max-width:300px;width:100%;") 
+            codice_corrente_input = ui.input('Codice corrente').props('outlined dense').classes('q-mb-sm').style("min-width:200px; max-width:300px;width:100%;") 
             msg_crea = ui.label().classes('text-negative q-mb-sm')
             # dipendente_id catturato dal contesto
             try:
@@ -467,11 +522,10 @@ def servizi_dipendente_page():
                 except Exception as e:
                     msg_crea.text = f'Errore: {e}'
 
-            ui.button('Crea', on_click=submit_servizio).classes('q-mt-md q-pa-md')
-            ui.button('Annulla', on_click=lambda: crea_servizio_dialog.close()).classes('q-ml-md q-pa-md')
+            ui.button('Crea', on_click=submit_servizio).classes('custom-button-blue-light-panels')
+            ui.button('Annulla', on_click=lambda: crea_servizio_dialog.close()).classes('custom-button-blue-light-panels')
 
-    # Pulsante flottante sempre visibile (utile se vuoi un accesso rapido alla creazione)
-    ui.button('Crea Servizio', icon='add', on_click=lambda: crea_servizio_dialog.open()).props('flat').classes('fixed bottom-6 right-6 q-pa-md bg-primary text-white')
+    
 
 # eventuale registrazione della pagina nell'app se usi router
 try:

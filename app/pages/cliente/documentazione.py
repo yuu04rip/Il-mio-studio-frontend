@@ -23,6 +23,7 @@ TIPI_DOCUMENTO = [
     {"label": "Tessera sanitaria", "value": "tessera_sanitaria", "icon": "medical_information"},
     {"label": "Patente", "value": "patente", "icon": "directions_car"},
 ]
+upload_containers = {}
 
 
 def documentazione_page():
@@ -47,7 +48,7 @@ def documentazione_page():
 }
 
 .custom-uploader  .q-uploader__header{
-    background: trasparent !important;
+    background: transparent !important;
     font-weight: 600 !important;
     border-radius: 2.5em !important;
     box-shadow: 0 10px 32px 0 #1976d222, 0 2px 10px 0 #00000012 !important;
@@ -62,14 +63,10 @@ def documentazione_page():
         return
 
     with ui.card().classes('q-pa-xl q-mt-xl q-mx-auto shadow-5').style(
-            'max-width:640px;background: rgba(240,240,240) !important; '
-            'box-shadow: 0 10px 32px 0 #1976d222, 0 2px 10px 0 #00000012 !important; '
-            'border-radius: 2.5em !important; align-items:center;'
+            'max-width:540px;background: rgba(240,240,240) !important; box-shadow: 0 10px 32px 0 #1976d222, 0 2px 10px 0 #00000012 !important;  border-radius: 2.5em !important;  align-items:center;'
     ):
         ui.label('Documenti personali').classes('text-h5 q-mb-xl').style(
-            'background: linear-gradient(90deg, #2196f3 70%, #1976d2 100%) !important;'
-            'color:white;border-radius:2em;padding:.6em 2.5em;display:block;text-align:center;'
-            'font-weight:600;letter-spacing:0.04em;'
+            'background: trasporant !importtant;color:#1976d2;border-radius:2em;padding:.6em 2.5em;display:block;text-align:center;font-weight:600;letter-spacing:0.04em;font-size:2rem;'
         )
 
         with ui.row().classes('q-mb-lg').style('justify-content:center;'):
@@ -133,7 +130,7 @@ def documentazione_page():
                                         upload_container = ui.column()
                                         ui.button(
                                             '', icon='upload', color='purple',
-                                            on_click=lambda d=doc: sostituisci_documento(d['id'], refresh_docs)
+                                            on_click=lambda d=doc, c=upload_container: sostituisci_documento(d['id'], refresh_docs,c)
                                         ).props('round flat size=lg').classes('q-ml-sm action-btn')
                 else:
                     with doc_list:
@@ -185,7 +182,28 @@ async def upload_documento(event, cliente_id, tipo, callback):
             callback(False)
 
 
-def sostituisci_documento(doc_id, refresh_callback):
+def sostituisci_documento(doc_id, refresh_callback,container):
+    container.clear()
+
+    ui.add_head_html("""
+    <style>
+    .custom-uploader-viola .q-uploader__header-content {
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        background: linear-gradient(90deg, #8e24aa 70%, #5e35b1 100%) !important;
+        color: white !important;
+        font-weight: 600 !important;
+        border-radius: 2.5em !important;
+    }
+    .custom-uploader-viola .q-uploader__header {
+        background: transparent !important;
+        font-weight: 600 !important;
+        border-radius: 2.5em !important;
+        box-shadow: 0 10px 32px 0 #1976d222, 0 2px 10px 0 #00000012 !important;
+    }
+    </style>
+    """)
     async def on_upload(event):
         filename = getattr(event.file, 'name', 'documento')
         mimetype = getattr(event, 'type', 'application/octet-stream')

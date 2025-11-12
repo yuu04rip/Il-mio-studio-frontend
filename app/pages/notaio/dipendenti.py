@@ -2,17 +2,30 @@ from nicegui import ui
 from app.api.api import api_session
 
 def dipendenti_page():
-    ui.label('Gestione Dipendenti').classes('text-h5 q-mt-xl q-mb-lg').style(
-        'background:#1976d2;color:white;border-radius:2em;padding:.5em 2.5em;display:block;text-align:center;font-weight:600;letter-spacing:0.04em;'
-    )
-
-    with ui.card().classes('q-mb-xl shadow-3').style('max-width:440px;margin:auto;'):
-        ui.label('Aggiungi Dipendente').classes('text-h6 q-mb-md')
-        nome = ui.input('Nome').props('outlined dense')
-        cognome = ui.input('Cognome').props('outlined dense')
-        email = ui.input('Email').props('outlined dense type=email')
-        numero = ui.input('Numero telefonico').props('outlined dense type=tel')
-        password = ui.input('Password', password=True).props('outlined dense')
+    ui.add_head_html("""
+<style>
+.custom-btn.q-btn{
+    font-size: 1.12em !important;
+    font-weight: 600;
+    border-radius: 1.8em !important;
+    background: linear-gradient(90deg, #2196f3 70%, #1976d2 100%) !important;
+    color: #fff !important;
+    box-shadow: 0 4px 16px 0 #2196f341;
+    padding: 0.95em 0 !important;
+    margin-top: 10px;
+    width: 100%;
+    transition: background .17s, box-shadow .16s, transform .14s;
+    border: none !important;
+}
+</style>
+""")
+    with ui.card().classes('q-mb-xl shadow-3').style('background: rgba(240,240,240) !important;box-shadow: 0 10px 32px 0 #1976d222, 0 2px 10px 0 #00000012 !important;border-radius: 2.5em !important;border: 1.7px solid #e3eaf1 !important;backdrop-filter: blur(6px);-webkit-backdrop-filter: blur(6px);overflow: hidden;margin: auto;align-items:center;max-width: 350px;width: 100%;'):
+        ui.label('Aggiungi Dipendente').classes('text-h6 q-mb-md').style('background: trasporant !importtant;color:#1976d2;border-radius:2em;padding:.6em 2.5em;display:block;text-align:center;font-weight:600;letter-spacing:0.04em;font-size:2rem;')
+        nome = ui.input('Nome').props('outlined dense').style('max-width: 300px; width: 100%;')
+        cognome = ui.input('Cognome').props('outlined dense').style('max-width: 300px; width: 100%;')
+        email = ui.input('Email').props('outlined dense type=email').style('max-width: 300px; width: 100%;')
+        numero = ui.input('Numero telefonico').props('outlined dense type=tel').style('max-width: 300px; width: 100%;')
+        password = ui.input('Password', password=True).props('outlined dense').style('max-width: 300px; width: 100%;')
         ruolo = ui.select(
             options=['DIPENDENTE', 'NOTAIO'], label='Ruolo'
         ).props('outlined dense')
@@ -42,9 +55,9 @@ def dipendenti_page():
             except Exception as e:
                 msg.text = f"Errore: {str(e)}"
 
-        ui.button('Aggiungi', on_click=do_add).classes('q-mt-md')
+        ui.button('Aggiungi', on_click=do_add).classes('custom-btn')
 
-    with ui.card().classes('shadow-5').style('max-width:600px;margin:auto;'):
+    with ui.card().classes('shadow-5').style('background:#E0F7FA !important;box-shadow: 0 10px 32px 0 #1976d222, 0 2px 10px 0 #00000012 !important;border-radius: 1em !important;border: 1.7px solid #e3eaf1 !important;backdrop-filter: blur(6px);-webkit-backdrop-filter: blur(6px);overflow: hidden;margin: auto;align-items:center;max-width: 350px;width: 100%;'):
         ui.label('Lista Dipendenti').classes('text-h6 q-mb-md')
         dip_list = ui.column().classes('full-width').style('gap:14px;')
 
