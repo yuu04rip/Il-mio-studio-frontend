@@ -112,4 +112,4 @@ def get_icon_for_stato(stato):
         'RIFIUTATO': 'cancel',
         'CONSEGNATO': 'done_all',
     }
-    return icons.get(stato, 'help')
+    return icons.get(stato,'help')
