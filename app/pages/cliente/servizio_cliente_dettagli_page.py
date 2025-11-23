@@ -133,3 +133,4 @@ def servizio_cliente_dettagli_page(cliente_id: int, servizio_id: int):
                 icon='list',
                 on_click=lambda: ui.navigate.to(f'/servizi_cliente/{cliente_id}')
             ).classes('q-pa-md')
+            # Fine card principale
