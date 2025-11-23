@@ -103,6 +103,15 @@ class APIClient:
         resp.raise_for_status()
         return resp.json()
 
+    def dearchivia_servizio(self, servizio_id: int):
+        """
+        Chiamata client per dearchiviare un servizio.
+        """
+        url = f"{API_BASE}/backup/backup/dearchivia-servizio/{servizio_id}"
+        resp = requests.put(url, headers=self._headers())
+        resp.raise_for_status()
+        return resp.json()
+
     def mostra_servizi_archiviati(self):
         resp = requests.get(f"{API_BASE}/studio/servizi/archiviati", headers=self._headers())
         resp.raise_for_status()
@@ -110,7 +119,7 @@ class APIClient:
 
     def modifica_servizio_archiviato(self, servizio_id, statoServizio: bool):
         resp = requests.put(
-            f"{API_BASE}/studio/servizi/{servizio_id}/modifica-archiviazione",
+            f"{API_BASE}/backup/backup/servizi/{servizio_id}/modifica-archiviazione",
             json={"statoServizio": statoServizio},
             headers=self._headers()
         )
@@ -185,14 +194,18 @@ class APIClient:
         resp.raise_for_status()
         return resp.json()
 
-    def crea_servizio(self, cliente_id, tipo, codice_corrente, dipendente_id):
+    # parte di APIClient (sostituire il metodo esistente crea_servizio)
+    def crea_servizio(self, cliente_id, tipo, codice_corrente=None, dipendente_id=None):
         url = f"{API_BASE}/studio/servizi"
         data = {
             "cliente_id": int(cliente_id),
             "tipo": tipo,
-            "codiceCorrente": int(codice_corrente),
-            "dipendente_id": int(dipendente_id) if dipendente_id is not None else None
         }
+        # includi codiceCorrente solo se fornito (altrimenti il backend lo genera)
+        if codice_corrente is not None and str(codice_corrente).strip() != "":
+            data["codiceCorrente"] = int(codice_corrente)
+        if dipendente_id is not None:
+            data["dipendente_id"] = int(dipendente_id)
         resp = requests.post(url, json=data, headers=self._headers())
         resp.raise_for_status()
         return resp.json()
