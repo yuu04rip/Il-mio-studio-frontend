@@ -23,6 +23,7 @@ from app.pages.cliente.servizio_cliente_dettagli_page import servizio_cliente_de
 from app.pages.cliente.documentazione_servizio_cliente_page import documentazione_servizio_page_cliente
 from app.pages.dipendente.clienti_dipendente import clienti_page_dipendente
 from app.pages.notaio.servizio_dettagli_page_notaio import servizio_dettagli_page_notaio
+from app.pages.notaio.archiviazione import servizi_notaio_archiviati_page
 ui.page('/')(login_page)
 ui.page('/register')(register_page)
 ui.page('/change_password')(change_password_page)
@@ -46,8 +47,7 @@ ui.page('/servizi_cliente/{cliente_id}/dettagli/{servizio_id}')(servizio_cliente
 ui.page('/documentaizone_servizio_cliente/{servizio_id}')(documentazione_servizio_page_cliente)
 ui.page('/clienti_dipendente')(clienti_page_dipendente)
 ui.page('/servizi_notaio/{id}/dettagli')(servizio_dettagli_page_notaio)
-# --- AGGIUNGI QUESTA ROUTE ---
-
+ui.page('/servizi_notaio_archiviati')(servizi_notaio_archiviati_page)
 ui.page('/servizi/{servizio_id}/documenti')(documentazione_servizio_page)
 ui.page('/servizi_cliente/{cliente_id}/documenti')(documentazione_cliente_page)
 # Serve per l'upload (puoi usare la stessa funzione/pagina)

@@ -190,7 +190,9 @@ def home_notaio():
         with ui.row().classes('q-gutter-lg').style('justify-content:center;'):
             ui.button('DIPENDENTI', icon='add', on_click=lambda: ui.navigate.to('/dipendenti')) \
                 .classes('q-pa-xl').style('min-width:160px;font-weight:600;font-size:1.08em;')
-            ui.button('ACCETTAZIONE E ARCHIVIO', icon='check', on_click=lambda: ui.navigate.to('/accettazione')) \
+            ui.button('ACCETTAZIONE', icon='check', on_click=lambda: ui.navigate.to('/accettazione')) \
+                .classes('q-pa-xl').style('min-width:160px;font-weight:600;font-size:1.08em;')
+            ui.button('ARCHIVIAZIONE', icon='folder', on_click=lambda: ui.navigate.to('/servizi_notaio_archiviati')) \
                 .classes('q-pa-xl').style('min-width:160px;font-weight:600;font-size:1.08em;')
             
 
