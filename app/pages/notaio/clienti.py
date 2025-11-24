@@ -287,7 +287,15 @@ def clienti_page():
 
     # ---- Lista clienti ----
     def carica_clienti():
-        nonlocal clienti_originali
+        """Carica i clienti e aggiorna la lista."""
+        nonlocal clienti_originali, miei_clienti_ids, clienti_display
+
+        try:
+            resp_miei = api_session.get('/studio/clienti?onlyMine=true')
+            miei_clienti_ids = {c.get('id') for c in resp_miei.json()} if resp_miei.status_code == 200 else set()
+        except Exception:
+            miei_clienti_ids = set()
+
         try:
             resp = api_session.get('/studio/clienti/')
             clienti_originali = resp.json() if resp.status_code == 200 else []
@@ -319,8 +327,10 @@ def clienti_page():
             nome = cli.get('utente', {}).get('nome', '')
             cognome = cli.get('utente', {}).get('cognome', '')
             email = cli.get('utente', {}).get('email', '')
-            fields = ' '.join([str(nome), str(cognome), str(email)]).lower()
+
+            fields = f"{nome} {cognome} {email}".lower()
             words = fields.split()
+
             for token in tokens:
                 if not any(w.startswith(token) for w in words):
                     return False
@@ -331,12 +341,18 @@ def clienti_page():
 
     def render_clienti():
         clienti_list.clear()
+
         if not clienti_display:
             with clienti_list:
                 ui.label('Nessun cliente trovato.').classes('text-grey-7 q-mt-md')
             return
 
         for cli in clienti_display:
+            nome = cli.get('utente', {}).get('nome', '')
+            cognome = cli.get('utente', {}).get('cognome', '')
+            cliente_id = cli.get('id')
+            is_mio = cliente_id in miei_clienti_ids
+
             with clienti_list:
                 with ui.card().style('background:#e3f2fd;border-radius:1em;min-height:78px;padding:1em 2em;'):
                     nome = cli.get('utente', {}).get('nome', '')
@@ -353,6 +369,7 @@ def clienti_page():
                             color='primary',
                             on_click=lambda id=cliente_id, t=title: mostra_servizi_cliente_dialog(id, t),
                         ).props('flat round')
+
                         ui.button(
                             'Documenti',
                             icon='folder',
@@ -381,8 +398,7 @@ def clienti_page():
         ui.navigate.to(f'/servizi_cliente/{cliente_id}/documenti')
 
     def on_search_change(e=None):
-        val = search.value if search.value is not None else ''
-        val = str(val).strip()
+        val = str(search.value or '').strip()
         if val == '' or len(val) < SEARCH_MIN_LENGTH:
             mostra_tutti_clienti()
         else:

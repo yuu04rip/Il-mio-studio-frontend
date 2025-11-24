@@ -41,7 +41,6 @@ def _format_date(date_str: Optional[str]) -> str:
     except Exception:
         return str(date_str)
 
-# mapping logical color names to hex codes for badges
 _COLOR_MAP = {
     'positive': '#43a047',  # green
     'negative': '#e53935',  # red
@@ -107,7 +106,6 @@ def servizi_cliente_approvati_page(cliente_id: int):
         else:
             return f'/servizi_cliente/{cliente_id}/dettagli/{servizio_id}'
 
-    # Card principale
     with ui.card().classes('q-pa-xl q-mt-xl q-mx-auto').style(
             'background:#f8fafc;border-radius:1.2em;max-width:960px;'
     ):

@@ -437,11 +437,7 @@ def clienti_page_dipendente():
         nonlocal clienti_originali, miei_clienti_ids
         try:
             resp_miei = api_session.get('/studio/clienti?onlyMine=true')
-            if resp_miei.status_code == 200:
-                miei = resp_miei.json()
-                miei_clienti_ids = {c.get('id') for c in miei if c}
-            else:
-                miei_clienti_ids = set()
+            miei_clienti_ids = {c.get('id') for c in resp_miei.json()} if resp_miei.status_code == 200 else set()
         except Exception:
             miei_clienti_ids = set()
 
@@ -451,9 +447,8 @@ def clienti_page_dipendente():
             else:
                 resp = api_session.get('/studio/clienti/')
             clienti_originali = resp.json() if resp.status_code == 200 else []
-        except Exception as e:
+        except Exception:
             clienti_originali = []
-            print(f"Errore caricamento clienti: {e}")
 
         val = (search.value or '').strip()
         if val and len(val) >= SEARCH_MIN_LENGTH:
@@ -479,10 +474,7 @@ def clienti_page_dipendente():
             email = cli.get('utente', {}).get('email', '')
             fields = ' '.join([str(nome), str(cognome), str(email)]).lower()
             words = fields.split()
-            for token in tokens:
-                if not any(w.startswith(token) for w in words):
-                    return False
-            return True
+            return all(any(w.startswith(t) for w in words) for t in tokens)
 
         clienti_display = [c for c in clienti_originali if match(c)]
         render_clienti(clienti_display)
@@ -496,23 +488,22 @@ def clienti_page_dipendente():
 
         for cli in clienti_display:
             with clienti_list:
-                with ui.card().style('background:#e3f2fd;border-radius:1em;min-height:78px;padding:1em 2em;'):
+                with ui.card().classes('client-card'):
                     nome = cli.get('utente', {}).get('nome', '')
                     cognome = cli.get('utente', {}).get('cognome', '')
                     cliente_id = cli.get('id')
 
                     is_mio = cliente_id in miei_clienti_ids
                     title = f"{nome} {cognome}"
-                    if is_mio:
-                        title = f"{title}  •  MIO"
+                    if cliente_id in miei_clienti_ids:
+                        title += "  •  MIO"
 
                     ui.label(title).classes('text-body1 q-mb-xs')
 
                     resp = cli.get('responsabile')
                     if resp:
-                        rnome = resp.get('nome', '')
-                        rcognome = resp.get('cognome', '')
-                        ui.label(f"Responsabile: {rnome} {rcognome}").classes('text-caption text-grey-6')
+                        ui.label(f"Responsabile: {resp.get('nome','')} {resp.get('cognome','')}") \
+                            .classes('text-caption text-grey-6')
 
                     with ui.row().style('gap:8px;'):
                         ui.button(
@@ -521,6 +512,7 @@ def clienti_page_dipendente():
                             color='primary',
                             on_click=lambda id=cliente_id, t=title: mostra_servizi_cliente_dialog(id, t),
                         ).props('flat round')
+
                         ui.button(
                             'Documenti',
                             icon='folder',
