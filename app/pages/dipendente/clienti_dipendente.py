@@ -6,6 +6,7 @@ SEARCH_MIN_LENGTH = 2  # soglia minima per attivare il filtro
 
 def clienti_page_dipendente():
 
+<<<<<<< HEAD
     ui.html('''
     <style>
 .clienti-title {
@@ -141,6 +142,28 @@ align-items: center !important;     /* centra orizzontalmente */
                 # dati in memoria
                 clienti_originali = []   # tutti i clienti (se richiesti)
                 miei_clienti_ids = set() # ids dei clienti assegnati al dipendente
+=======
+    # mostra il nome del dipendente (se disponibile in api_session.user)
+    user = getattr(api_session, 'user', None) or {}
+    user_nome = user.get('nome') or user.get('username') or ''
+    user_cognome = user.get('cognome') or ''
+    if user_nome or user_cognome:
+        ui.label(f'Operatore: {user_nome} {user_cognome}').classes('text-subtitle2 q-mb-sm')
+
+    # barra di ricerca + checkbox "solo i miei"
+    row = ui.row().classes('items-center q-mb-md').style('gap:12px;')
+    with row:
+        search = ui.input('', placeholder="Cerca per nome o cognome...").props('outlined dense').style('max-width:320px;margin-bottom:0;')
+        only_mine = ui.checkbox('Solo i miei', value=True).props('dense')
+        btn_refresh = ui.button('Aggiorna', icon='refresh', on_click=lambda: carica_clienti()).props('flat')
+
+    # area risultati
+    clienti_list = ui.column().classes('full-width').style('gap:18px;')
+
+    # dati in memoria
+    clienti_originali = []   # tutti i clienti (se richiesti)
+    miei_clienti_ids = set() # ids dei clienti assegnati al dipendente
+>>>>>>> 69d6150f1dc6c3f92382f0f4cf6157d1371eb1a0
 
     def carica_clienti():
         """Carica i clienti in base al toggle 'only_mine' e aggiorna la cache dei miei clienti."""
@@ -217,7 +240,11 @@ align-items: center !important;     /* centra orizzontalmente */
 
         for cli in clienti_display:
             with clienti_list:
+<<<<<<< HEAD
                 with ui.card().classes('client-card'):
+=======
+                with ui.card().style('background:#e3f2fd;border-radius:1em;min-height:78px;padding:1em 2em;'):
+>>>>>>> 69d6150f1dc6c3f92382f0f4cf6157d1371eb1a0
                     nome = cli.get('utente', {}).get('nome', '')
                     cognome = cli.get('utente', {}).get('cognome', '')
                     cliente_id = cli.get('id')

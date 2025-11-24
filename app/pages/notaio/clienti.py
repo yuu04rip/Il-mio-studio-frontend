@@ -139,6 +139,7 @@ def clienti_page():
         except Exception as e:
             clienti_originali = []
             print(f"Errore caricamento clienti: {e}")
+<<<<<<< HEAD
 
         val = (search.value or '').strip()
         if val and len(val) >= SEARCH_MIN_LENGTH:
@@ -148,6 +149,13 @@ def clienti_page():
 
     def mostra_tutti_clienti():
         render_clienti(clienti_originali[:])
+=======
+        mostra_tutti_clienti()
+
+    def mostra_tutti_clienti():
+        clienti_display[:] = clienti_originali[:]
+        render_clienti()
+>>>>>>> 69d6150f1dc6c3f92382f0f4cf6157d1371eb1a0
 
     def filtra_clienti(testo_ricerca):
         testo = testo_ricerca.strip().lower()
@@ -156,16 +164,34 @@ def clienti_page():
             return
 
         tokens = [t for t in testo.split() if t]
+<<<<<<< HEAD
+=======
+
+>>>>>>> 69d6150f1dc6c3f92382f0f4cf6157d1371eb1a0
         def match(cli):
             nome = cli.get('utente', {}).get('nome', '')
             cognome = cli.get('utente', {}).get('cognome', '')
             email = cli.get('utente', {}).get('email', '')
+<<<<<<< HEAD
             words = (f"{nome} {cognome} {email}".lower()).split()
             return all(any(w.startswith(token) for w in words) for token in tokens)
 
         render_clienti([c for c in clienti_originali if match(c)])
 
     def render_clienti(clienti_display):
+=======
+            fields = ' '.join([str(nome), str(cognome), str(email)]).lower()
+            words = fields.split()
+            for token in tokens:
+                if not any(w.startswith(token) for w in words):
+                    return False
+            return True
+
+        clienti_display[:] = [c for c in clienti_originali if match(c)]
+        render_clienti()
+
+    def render_clienti():
+>>>>>>> 69d6150f1dc6c3f92382f0f4cf6157d1371eb1a0
         clienti_list.clear()
         if not clienti_display:
             with clienti_list:
@@ -174,6 +200,7 @@ def clienti_page():
 
         for cli in clienti_display:
             with clienti_list:
+<<<<<<< HEAD
                 with ui.card().classes('client-card'):
                     nome = cli.get('utente', {}).get('nome', '')
                     cognome = cli.get('utente', {}).get('cognome', '')
@@ -184,6 +211,12 @@ def clienti_page():
                     resp = cli.get('responsabile')
                     if resp:
                         ui.label(f"Responsabile: {resp.get('nome', '')} {resp.get('cognome', '')}").classes('text-caption text-grey-6')
+=======
+                with ui.card().style('background:#e3f2fd;border-radius:1em;min-height:78px;padding:1em 2em;'):
+                    nome = cli.get('utente', {}).get('nome', '')
+                    cognome = cli.get('utente', {}).get('cognome', '')
+                    ui.label(f"{nome} {cognome}").classes('text-body1 q-mb-xs')
+>>>>>>> 69d6150f1dc6c3f92382f0f4cf6157d1371eb1a0
                     with ui.row().style('gap:8px;'):
                         ui.button('Servizi', icon='work', color='primary',
                                   on_click=lambda id=cliente_id: visualizza_servizi(id)).props('flat round')
@@ -193,11 +226,16 @@ def clienti_page():
     def visualizza_servizi(cliente_id):
         ui.navigate.to('/accettazione')
 
-    def visualizza_documenti(cliente_id):
-        ui.navigate.to(f'/documentazione_cliente/{cliente_id}')
+    def visualizza_documenti(servizio_id):
+        ui.navigate.to(f'/servizi/{servizio_id}/documenti')
 
     def on_search_change(e=None):
+<<<<<<< HEAD
         val = (search.value or '').strip()
+=======
+        val = search.value if search.value is not None else ''
+        val = str(val).strip()
+>>>>>>> 69d6150f1dc6c3f92382f0f4cf6157d1371eb1a0
         if val == '' or len(val) < SEARCH_MIN_LENGTH:
             mostra_tutti_clienti()
         else:

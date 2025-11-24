@@ -193,4 +193,9 @@ def servizi_cliente_approvati_page(cliente_id: int):
                     # azioni (pulsanti)
                     with ui.row().classes('items-center'):
                         ui.button('Vedi dettagli', icon='info', on_click=lambda s_id=servizio_id: ui.navigate.to(details_url(s_id))).classes('q-ml-sm').style(
+<<<<<<< HEAD
                             'background: linear-gradient(90deg,#1976d2,#1565c0); color:white; border-radius:12px;')
+=======
+                            'background: linear-gradient(90deg,#1976d2,#1565c0); color:white; border-radius:12px;'
+                        )
+>>>>>>> 69d6150f1dc6c3f92382f0f4cf6157d1371eb1a0

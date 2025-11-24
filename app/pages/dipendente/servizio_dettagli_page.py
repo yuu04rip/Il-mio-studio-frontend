@@ -22,24 +22,27 @@ def servizio_dettagli_page(id: str = None):
         ui.label("ID servizio non valido").classes('text-negative q-mt-xl')
         return
 
+    # Recupera i dati prima di costruire l'intestazione (così possiamo usare cliente_id nel back button)
+    try:
+        servizio_data = api_session.get(f'/studio/servizi/{servizio_id}')
+        servizio_data.raise_for_status()
+        servizio = Servizio.from_dict(servizio_data.json())
+
+        cliente_data = api_session.get(f'/studio/clienti/{servizio.cliente_id}/dettagli')
+        cliente_data.raise_for_status()
+        cliente = cliente_data.json()
+
+    except Exception as e:
+        ui.notify(f"Errore nel caricamento dei dettagli: {e}", color="negative")
+        ui.label("Impossibile caricare i dettagli del servizio").classes('text-negative q-mt-md')
+        return
+
+    # Ora possiamo costruire l'interfaccia sapendo il cliente_id
     with ui.card().classes('q-pa-xl q-mt-xl q-mx-auto').style('max-width: 800px;'):
+        # Back button ora torna sempre alla lista servizi cliente usando il cliente_id del servizio
         with ui.row().classes('items-center q-mb-lg'):
-            ui.button(icon='arrow_back', on_click=lambda: ui.navigate.to('/servizi')).classes('q-mr-md')
+            ui.button(icon='arrow_back', on_click=lambda cid=servizio.cliente_id: ui.navigate.to(f'/servizi_cliente/{cid}')).classes('q-mr-md')
             ui.label('DETTAGLI SERVIZIO').classes('text-h4 text-weight-bold')
-
-        try:
-            servizio_data = api_session.get(f'/studio/servizi/{servizio_id}')
-            servizio_data.raise_for_status()
-            servizio = Servizio.from_dict(servizio_data.json())
-
-            cliente_data = api_session.get(f'/studio/clienti/{servizio.cliente_id}/dettagli')
-            cliente_data.raise_for_status()
-            cliente = cliente_data.json()
-
-        except Exception as e:
-            ui.notify(f"Errore nel caricamento dei dettagli: {e}", color="negative")
-            ui.label("Impossibile caricare i dettagli del servizio").classes('text-negative q-mt-md')
-            return
 
         with ui.card().classes('q-pa-md q-mb-md').style('background:#f5f5f5;'):
             ui.label('INFORMAZIONI PRINCIPALI').classes('text-h6 text-weight-bold q-mb-md')
@@ -120,19 +123,15 @@ def servizio_dettagli_page(id: str = None):
                 ui.button(
                     'Modifica Servizio',
                     icon='edit',
-                    on_click=lambda: ui.navigate.to(f'/servizi/{servizio_id}/modifica')
+                    # passiamo servizio_id come default arg per evitare problemi di closure
+                    on_click=lambda sid=servizio_id: ui.navigate.to(f'/servizi/{sid}/modifica')
                 ).classes('q-pa-md')
 
             ui.button(
                 'Visualizza Documentazione',
                 icon='folder',
-                on_click=lambda: ui.navigate.to(f'/servizi/{servizio_id}/documenti')
-            ).classes('q-pa-md')
-
-            ui.button(
-                'Torna alla Lista',
-                icon='list',
-                on_click=lambda: ui.navigate.to('/servizi')
+                # passiamo servizio_id come default arg per evitare problemi di closure
+                on_click=lambda sid=servizio_id: ui.navigate.to(f'/servizi/{sid}/documenti')
             ).classes('q-pa-md')
 
 def get_icon_for_stato(stato):
