@@ -2,6 +2,19 @@ from nicegui import ui
 from app.api.api import api_session
 from app.models.servizio import Servizio
 
+
+def get_icon_for_stato(stato):
+    icons = {
+        'CREATO': 'pending_actions',
+        'IN_LAVORAZIONE': 'play_circle',
+        'IN_ATTESA_APPROVAZIONE': 'hourglass_empty',
+        'APPROVATO': 'check_circle',
+        'RIFIUTATO': 'cancel',
+        'CONSEGNATO': 'done_all',
+    }
+    return icons.get(stato, 'help')
+
+
 def servizio_dettagli_page(id: str = None):
     """Pagina per visualizzare i dettagli completi di un servizio"""
 
@@ -22,35 +35,48 @@ def servizio_dettagli_page(id: str = None):
         ui.label("ID servizio non valido").classes('text-negative q-mt-xl')
         return
 
-    # Recupera i dati prima di costruire l'intestazione (così possiamo usare cliente_id nel back button)
     try:
-        servizio_data = api_session.get(f'/studio/servizi/{servizio_id}')
-        servizio_data.raise_for_status()
-        servizio = Servizio.from_dict(servizio_data.json())
+        servizio_resp = api_session.get(f'/studio/servizi/{servizio_id}')
+        servizio_resp.raise_for_status()
+        servizio_json = servizio_resp.json()
+        servizio = Servizio.from_dict(servizio_json)
 
-        cliente_data = api_session.get(f'/studio/clienti/{servizio.cliente_id}/dettagli')
-        cliente_data.raise_for_status()
-        cliente = cliente_data.json()
+        cliente_resp = api_session.get(f'/studio/clienti/{servizio.cliente_id}/dettagli')
+        cliente_resp.raise_for_status()
+        cliente = cliente_resp.json()
+
+        # dati creatore
+        creato_da = servizio_json.get('creato_da') or {}
+        creatore_nome = creato_da.get('nome')
+        creatore_cognome = creato_da.get('cognome')
+        creatore_id = servizio_json.get('creato_da_id')
 
     except Exception as e:
         ui.notify(f"Errore nel caricamento dei dettagli: {e}", color="negative")
         ui.label("Impossibile caricare i dettagli del servizio").classes('text-negative q-mt-md')
         return
 
-    # Ora possiamo costruire l'interfaccia sapendo il cliente_id
-    with ui.card().classes('q-pa-xl q-mt-xl q-mx-auto').style('max-width: 800px;'):
-        # Back button ora torna sempre alla lista servizi cliente usando il cliente_id del servizio
+    with ui.card().classes('q-pa-xl q-mt-xl q-mx-auto').style(
+            'max-width: 800px;background:#f0f0f0;border-radius:2.5em;'
+    ):
+        # Header con back
         with ui.row().classes('items-center q-mb-lg'):
-            ui.button(icon='arrow_back', on_click=lambda cid=servizio.cliente_id: ui.navigate.to(f'/servizi_cliente/{cid}')).classes('q-mr-md')
+            ui.button(
+                icon='arrow_back',
+                on_click=lambda: ui.run_javascript('history.back()'),
+            ).classes('q-mr-md')
             ui.label('DETTAGLI SERVIZIO').classes('text-h4 text-weight-bold')
 
+        # Info principali
         with ui.card().classes('q-pa-md q-mb-md').style('background:#f5f5f5;'):
             ui.label('INFORMAZIONI PRINCIPALI').classes('text-h6 text-weight-bold q-mb-md')
 
             with ui.grid(columns=2).classes('w-full gap-4'):
                 with ui.column():
                     ui.label('Tipo Servizio:').classes('text-weight-bold')
-                    ui.label(servizio.tipo.value if hasattr(servizio.tipo, 'value') else servizio.tipo).classes('text-body1')
+                    ui.label(
+                        servizio.tipo.value if hasattr(servizio.tipo, 'value') else servizio.tipo
+                    ).classes('text-body1')
 
                     ui.label('Codice Servizio:').classes('text-weight-bold q-mt-md')
                     ui.label(str(servizio.codiceServizio)).classes('text-body1')
@@ -63,7 +89,7 @@ def servizio_dettagli_page(id: str = None):
                             'IN_ATTESA_APPROVAZIONE': 'text-yellow',
                             'APPROVATO': 'text-green',
                             'RIFIUTATO': 'text-red',
-                            'CONSEGNATO': 'text-purple'
+                            'CONSEGNATO': 'text-purple',
                         }.get(servizio.statoServizio, 'text-grey')
                         ui.icon(get_icon_for_stato(servizio.statoServizio)).classes(f'{icon_color} q-mr-sm')
                         ui.label(servizio.statoServizio).classes('text-body1')
@@ -73,18 +99,29 @@ def servizio_dettagli_page(id: str = None):
                     ui.label(str(servizio.codiceCorrente)).classes('text-body1')
 
                     ui.label('Data Richiesta:').classes('text-weight-bold q-mt-md')
-                    ui.label(servizio.dataRichiesta.strftime('%d/%m/%Y %H:%M') if hasattr(servizio.dataRichiesta, 'strftime') else servizio.dataRichiesta).classes('text-body1')
+                    ui.label(
+                        servizio.dataRichiesta.strftime('%d/%m/%Y %H:%M')
+                        if hasattr(servizio.dataRichiesta, 'strftime')
+                        else servizio.dataRichiesta
+                    ).classes('text-body1')
 
                     ui.label('Data Consegna:').classes('text-weight-bold q-mt-md')
-                    ui.label(servizio.dataConsegna.strftime('%d/%m/%Y %H:%M') if hasattr(servizio.dataConsegna, 'strftime') else servizio.dataConsegna).classes('text-body1')
+                    ui.label(
+                        servizio.dataConsegna.strftime('%d/%m/%Y %H:%M')
+                        if hasattr(servizio.dataConsegna, 'strftime')
+                        else servizio.dataConsegna
+                    ).classes('text-body1')
 
+        # Info cliente
         with ui.card().classes('q-pa-md q-mb-md').style('background:#e8f5e8;'):
             ui.label('INFORMAZIONI CLIENTE').classes('text-h6 text-weight-bold q-mb-md')
 
             with ui.grid(columns=2).classes('w-full gap-4'):
                 with ui.column():
                     ui.label('Nome e Cognome:').classes('text-weight-bold')
-                    ui.label(f"{cliente.get('nome', 'N/A')} {cliente.get('cognome', 'N/A')}").classes('text-body1')
+                    ui.label(
+                        f"{cliente.get('nome', 'N/A')} {cliente.get('cognome', 'N/A')}"
+                    ).classes('text-body1')
 
                     ui.label('Email:').classes('text-weight-bold q-mt-md')
                     ui.label(cliente.get('email', 'N/A')).classes('text-body1')
@@ -96,6 +133,7 @@ def servizio_dettagli_page(id: str = None):
                     ui.label('ID Cliente:').classes('text-weight-bold q-mt-md')
                     ui.label(str(cliente.get('id', 'N/A'))).classes('text-body1')
 
+        # Dipendente responsabile
         with ui.card().classes('q-pa-md q-mb-md').style('background:#e3f2fd;'):
             ui.label('DIPENDENTE RESPONSABILE').classes('text-h6 text-weight-bold q-mb-md')
 
@@ -108,7 +146,8 @@ def servizio_dettagli_page(id: str = None):
                         with ui.row().classes('items-center q-pa-sm'):
                             ui.icon('person').classes('q-mr-sm')
                             ui.label(
-                                f"{dip_responsabile.get('nome', 'N/A')} {dip_responsabile.get('cognome', 'N/A')} "
+                                f"{dip_responsabile.get('nome', 'N/A')} "
+                                f"{dip_responsabile.get('cognome', 'N/A')} "
                                 f"(ID: {dip_responsabile.get('id', 'N/A')})"
                             ).classes('text-body1')
                     else:
@@ -118,29 +157,35 @@ def servizio_dettagli_page(id: str = None):
             except Exception:
                 ui.label("Errore nel caricamento dei dipendenti").classes('text-grey-7 italic')
 
+        # Creatore del servizio
+        with ui.card().classes('q-pa-md q-mb-md').style('background:#fff3e0;'):
+            ui.label('CREATO DA').classes('text-h6 text-weight-bold q-mb-md')
+
+            testo = None
+            if (creatore_nome or creatore_cognome) and creatore_id is not None:
+                testo = f"{creatore_nome or ''} {creatore_cognome or ''} (ID: {creatore_id})".strip()
+            elif creatore_id is not None:
+                testo = f"ID creatore: {creatore_id}"
+            else:
+                testo = "Informazione sul creatore non disponibile"
+
+            with ui.row().classes('items-center q-pa-sm'):
+                ui.icon('person').classes('q-mr-sm')
+                ui.label(testo).classes(
+                    'text-body1' if creatore_id is not None else 'text-grey-7 italic'
+                )
+
+        # Azioni
         with ui.row().classes('q-mt-lg justify-center'):
             if servizio.statoServizio in ['CREATO', 'IN_LAVORAZIONE']:
                 ui.button(
                     'Modifica Servizio',
                     icon='edit',
-                    # passiamo servizio_id come default arg per evitare problemi di closure
-                    on_click=lambda sid=servizio_id: ui.navigate.to(f'/servizi/{sid}/modifica')
+                    on_click=lambda sid=servizio_id: ui.navigate.to(f'/servizi/{sid}/modifica'),
                 ).classes('q-pa-md')
 
             ui.button(
                 'Visualizza Documentazione',
                 icon='folder',
-                # passiamo servizio_id come default arg per evitare problemi di closure
-                on_click=lambda sid=servizio_id: ui.navigate.to(f'/servizi/{sid}/documenti')
+                on_click=lambda sid=servizio_id: ui.navigate.to(f'/servizi/{sid}/documenti'),
             ).classes('q-pa-md')
-
-def get_icon_for_stato(stato):
-    icons = {
-        'CREATO': 'pending_actions',
-        'IN_LAVORAZIONE': 'play_circle',
-        'IN_ATTESA_APPROVAZIONE': 'hourglass_empty',
-        'APPROVATO': 'check_circle',
-        'RIFIUTATO': 'cancel',
-        'CONSEGNATO': 'done_all',
-    }
-    return icons.get(stato, 'help')

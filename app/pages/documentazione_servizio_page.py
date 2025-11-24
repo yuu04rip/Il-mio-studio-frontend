@@ -82,7 +82,7 @@ def _serve_preview_doc_wrapper(preview_id: str):
     return Response(html, media_type='text/html')
 
 
-# helper: preview, download
+# --- helper preview e download ---
 def _preview_documento(doc: dict):
     try:
         content = api_session.download_documentazione(doc['id'])
@@ -121,7 +121,11 @@ def _preview_documento(doc: dict):
         return
 
     preview_id = uuid.uuid4().hex
-    _PREVIEW_FILES_DOC[preview_id] = {'path': tmp.name, 'mime': mime, 'filename': doc.get('filename') or f'doc_{doc["id"]}{suffix}'}
+    _PREVIEW_FILES_DOC[preview_id] = {
+        'path': tmp.name,
+        'mime': mime,
+        'filename': doc.get('filename') or f'doc_{doc["id"]}{suffix}',
+    }
 
     def _cleanup(pid):
         info = _PREVIEW_FILES_DOC.pop(pid, None)
@@ -178,18 +182,20 @@ def _proxy_download_doc(doc: dict):
                 os.unlink(tmp_file.name)
             except Exception:
                 pass
+
     def _cleanup(path):
         try:
             if os.path.exists(path):
                 os.remove(path)
         except Exception:
             pass
+
     Timer(60.0, _cleanup, args=(tmp_file.name,)).start()
 
 
 async def upload_documento(event, target_id, tipo, callback):
     """
-    target_id: servizio_id or cliente_id depending on context
+    target_id: servizio_id o cliente_id a seconda del contesto
     tipo: tipo documento (string)
     callback: function(success: bool)
     """
@@ -206,8 +212,7 @@ async def upload_documento(event, target_id, tipo, callback):
         tmp.flush()
         tmp_path = tmp.name
     try:
-        # decide quale API chiamare in base al contesto: se target_id rappresenta servizio (int) e endpoint supporta servizio -> usa carica_documentazione_servizio
-        # here we call carica_documentazione_servizio for consistency (frontend previously used it).
+        # usiamo sempre l'endpoint per servizi (come nel codice originale)
         api_session.carica_documentazione_servizio(target_id, tipo, tmp_path, filename=event.file.name)
         try:
             callback(True)
@@ -227,67 +232,70 @@ async def upload_documento(event, target_id, tipo, callback):
                 pass
 
 
-def elimina_documento(servizio_id, doc_id, refresh_callback):
-    def conferma_eliminazione():
-        try:
-            api_session.elimina_documentazione_servizio(servizio_id, doc_id)
-            ui.notify("Documento eliminato!", color='positive')
-        except Exception:
-            ui.notify("Errore nell'eliminazione.", color='negative')
-        try:
-            dialog.close()
-        except Exception:
-            pass
-        if callable(refresh_callback):
-            try:
-                refresh_callback()
-            except Exception:
-                pass
-
-    dialog = ui.dialog().props('persistent')
-    with dialog, ui.card().classes('q-pa-md').style('max-width:340px;'):
-        ui.label('Confermi di voler eliminare questo documento?')
-        with ui.row():
-            ui.button('Elimina', color='negative', on_click=conferma_eliminazione)
-            ui.button('Annulla', on_click=dialog.close)
-    dialog.open()
-
-
-# -------- _render_doc_row definita prima dell'uso --------
-def _render_doc_row(doc: dict, container, is_service: bool = False, servizio_id: Optional[int] = None, refresh_callback=None):
+def _render_doc_row(
+        doc: dict,
+        container,
+        is_service: bool = False,
+        servizio_id: Optional[int] = None,
+        refresh_callback=None,
+):
     filename = doc.get("filename") or f"documento_{doc.get('id')}"
     tipo_label = doc.get("tipo") or doc.get("label") or "Documento"
     ext = str(filename).split('.')[-1].lower() if filename and '.' in filename else ''
     tipo_icon = "description"
     with container:
-        with ui.card().style('background:#f4f7fb;border-radius:1.5em;min-height:108px;padding:1.5em 2em;box-shadow:0 2px 14px 0 #0001;display:flex;align-items:center;max-width:800px;width:100%;'):
+        with ui.card().style(
+                'background:#f4f7fb;border-radius:1.5em;min-height:72px;'
+                'padding:1em 1.4em;margin-bottom:8px;'
+        ):
             with ui.row().classes('items-center').style('width:100%;gap:12px;'):
                 ui.icon(tipo_icon).style('font-size:1.8em;color:#1976d2;margin-right:12px;')
                 with ui.column().style('flex:1;text-align:left;'):
                     ui.label(tipo_label).classes('text-body1').style('font-weight:700')
-                    ui.label(filename).classes('text-grey-7').style('font-size:0.95em;max-width:420px;overflow-x:auto;word-break:break-all;')
+                    ui.label(filename).classes('text-grey-7').style(
+                        'font-size:0.95em;max-width:420px;overflow-x:auto;word-break:break-all;'
+                    )
                 with ui.row().classes('items-center').style('gap:8px;'):
                     if ext in ["pdf", "jpg", "jpeg", "png"]:
-                        btn_preview = ui.button('', icon='visibility', color='info').props('round flat size=lg type=button').classes('action-btn')
+                        btn_preview = ui.button('', icon='visibility', color='info') \
+                            .props('round flat size=lg type=button').classes('action-btn')
                         btn_preview.on('click', lambda e, d=doc: _preview_documento(d))
-                    btn_dl = ui.button('', icon='download', color='primary').props('round flat size=lg type=button').classes('action-btn')
+                    btn_dl = ui.button('', icon='download', color='primary') \
+                        .props('round flat size=lg type=button').classes('action-btn')
                     btn_dl.on('click', lambda e, d=doc: _proxy_download_doc(d))
                     if is_service:
-                        # attach confirmation dialog and delete action
                         def _attach_confirm(_doc=doc):
                             dlg = ui.dialog().props('persistent')
                             with dlg, ui.card().classes('q-pa-md').style('max-width:360px;'):
                                 ui.label('Confermi di voler eliminare questo documento?').classes('q-mb-md')
                                 with ui.row().style('justify-content:flex-end;gap:8px;'):
-                                    ui.button('Elimina', color='negative', on_click=lambda: (dlg.close(), api_session.elimina_documentazione_servizio(servizio_id, _doc['id']), ui.notify("Documento eliminato!", color='positive'), refresh_callback() if callable(refresh_callback) else None))
+                                    ui.button(
+                                        'Elimina',
+                                        color='negative',
+                                        on_click=lambda: (
+                                            dlg.close(),
+                                            api_session.elimina_documentazione_servizio(servizio_id, _doc['id']),
+                                            ui.notify("Documento eliminato!", color='positive'),
+                                            refresh_callback() if callable(refresh_callback) else None,
+                                        ),
+                                    )
                                     ui.button('Annulla', on_click=dlg.close)
                             dlg.open()
-                        btn_del = ui.button('', icon='delete', color='negative').props('round flat size=lg type=button').classes('action-btn')
+
+                        btn_del = ui.button('', icon='delete', color='negative') \
+                            .props('round flat size=lg type=button').classes('action-btn')
                         btn_del.on('click', lambda e, _f=_attach_confirm: _f())
 
 
-# -------- Pagina documentazione (unica funzione, servizio_id opzionale) --------
-def documentazione_servizio_page(servizio_id: Optional[int] = None):
+# -----------------------
+# PAGINA: solo documenti personali (cliente) – per un cliente specifico
+# -----------------------
+def documentazione_cliente_page(cliente_id: int):
+    """
+    Mostra SOLO i documenti personali del cliente con id = cliente_id.
+    Nessuna opzione di upload.
+    Da usare con route: /clienti/{cliente_id}/documenti
+    """
     ui.add_head_html("""
 <style>
 .q-uploader {
@@ -296,20 +304,14 @@ def documentazione_servizio_page(servizio_id: Optional[int] = None):
     border: none !important;
 }
 .q-uploader__list {
-    display: none !important; /* nasconde il riquadro bianco */
+    display: none !important;
 }
-.custom-uploader .q-uploader__header-content {
-    display: flex !important;          /* esempio */
-    justify-content: center !important;
-    align-items: center !important;
-    background: linear-gradient(90deg, #1976d2 70%, #0d47a1 100%) !important;
-    color: white !important;
-    font-weight: 600 !important;
-    border-radius: 2.5em !important;
+.custom-uploader .q-uploader__header {
+    border: none !important;
+    box-shadow: none !important;
 }
-
-.custom-uploader  .q-uploader__header{
-    background: trasparent !important;
+.custom-uploader {
+    background: linear-gradient(90deg, #2196f3 70%, #1976d2 100%) !important;
     font-weight: 600 !important;
     border-radius: 2.5em !important;
     box-shadow: 0 10px 32px 0 #1976d222, 0 2px 10px 0 #00000012 !important;
@@ -326,33 +328,114 @@ def documentazione_servizio_page(servizio_id: Optional[int] = None):
 }
 </style>
 """)
-    user = api_session.user
-    cliente_id = user.get('id') if user else None
-    if not cliente_id and servizio_id is None:
-        ui.label('Utente non autenticato').classes('text-negative')
-        return
+    header(f'Documentazione cliente #{cliente_id}')
 
     with ui.card().classes('q-pa-xl q-mt-xl q-mx-auto shadow-5').style(
             'max-width:880px;background: rgba(240,240,240) !important; '
             'box-shadow: 0 10px 32px 0 #1976d222, 0 2px 10px 0 #00000012 !important; '
             'border-radius: 2.5em !important; align-items:center;'
     ):
-        ui.label('Documentazione' + (f' servizio #{servizio_id}' if servizio_id else '')).classes('text-h5 q-mb-xl').style(
-            'background: trasporant !importtant;color:#1976d2;border-radius:2em;padding:.6em 2.5em;display:block;text-align:center;font-weight:600;letter-spacing:0.04em;font-size:2rem;'
+        ui.label(f'Documentazione personale – cliente #{cliente_id}').classes('text-h5 q-mb-xl').style(
+            'background: linear-gradient(90deg, #2196f3 70%, #1976d2 100%) !important;'
+            'color:white;border-radius:2em;padding:.6em 2.5em;display:block;text-align:center;'
+            'font-weight:600;letter-spacing:0.04em;'
         )
 
-        # upload area
-        with ui.row().classes('q-mb-lg').style('justify-content:center;align-items:center;'):
-            # choose correct tipi list depending on whether we're in servizio context
-            tipi_opts = TIPI_DOCUMENTO_SERVIZIO if servizio_id else TIPI_DOCUMENTO
-            selected_tipo = ui.select(options={d["value"]: d["label"] for d in tipi_opts}, label='Tipo documento').props('outlined dense').classes('q-mr-md').style('min-width:220px;max-width:240px;')
-            # choose target id (if servizio_id provided we upload to servizio, else to personal cliente_id)
-            target_id = servizio_id if servizio_id is not None else cliente_id
+        container = ui.column().classes('full-width').style('gap:20px;')
+
+        def refresh_docs():
+            container.clear()
+            with container:
+                ui.label('Documenti personali del cliente').classes('text-h6 q-mb-sm')
+                try:
+                    print('[DEBUG] GET /documentazione/documenti/visualizza/', cliente_id)
+                    resp = api_session.get(f'/documentazione/documenti/visualizza/{cliente_id}')
+                    print('[DEBUG] status documenti personali:', resp.status_code)
+                    if resp.status_code == 200:
+                        print('[DEBUG] risposta documenti personali:', resp.json())
+                    client_docs = resp.json() if resp.status_code == 200 else []
+                except Exception as e:
+                    print('[DEBUG] errore chiamata documenti personali:', e)
+                    client_docs = []
+                client_docs = [d for d in client_docs if not d.get('is_deleted', False)]
+                if client_docs:
+                    for doc in client_docs:
+                        _render_doc_row(doc, container, is_service=False)
+                else:
+                    ui.label('Nessun documento personale caricato.').classes('text-grey-7')
+
+        refresh_docs()
+
+
+# -----------------------
+# PAGINA: solo documenti del servizio (con upload)
+# -----------------------
+def documentazione_servizio_page(servizio_id: int):
+    ui.add_head_html("""
+<style>
+.q-uploader {
+    background: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+}
+.q-uploader__list {
+    display: none !important;
+}
+.custom-uploader .q-uploader__header {
+    border: none !important;
+    box-shadow: none !important;
+}
+.custom-uploader {
+    background: linear-gradient(90deg, #2196f3 70%, #1976d2 100%) !important;
+    font-weight: 600 !important;
+    border-radius: 2.5em !important;
+    box-shadow: 0 10px 32px 0 #1976d222, 0 2px 10px 0 #00000012 !important;
+}
+.action-btn {
+    transition: background .2s, box-shadow .2s;
+    margin: 0 4px !important;
+    box-shadow: none !important;
+}
+.action-btn:hover {
+    background: #e3e7fb !important;
+    box-shadow: 0 1px 8px 0 #1976d241 !important;
+    transform: scale(1.08);
+}
+</style>
+""")
+    header(f'Documentazione servizio #{servizio_id}')
+
+    with ui.card().classes('q-pa-xl q-mt-xl q-mx-auto shadow-5').style(
+            'max-width:880px;background: rgba(240,240,240) !important; '
+            'box-shadow: 0 10px 32px 0 #1976d222, 0 2px 10px 0 #00000012 !important; '
+            'border-radius: 2.5em !important; alignments:center;'
+    ):
+        ui.label(f'Documentazione servizio #{servizio_id}').classes('text-h5 q-mb-xl').style(
+            'background: linear-gradient(90deg, #2196f3 70%, #1976d2 100%) !important;'
+            'color:white;border-radius:2em;padding:.6em 2.5em;display:block;text-align:center;'
+            'font-weight:600;letter-spacing:0.04em;'
+        )
+
+        # upload solo per documenti del servizio
+        with ui.row().classes('q-mb-lg').style('justify-content:center;'):
+            selected_tipo = ui.select(
+                options={d["value"]: d["label"] for d in TIPI_DOCUMENTO_SERVIZIO},
+                label='Tipo documento',
+            ).props('outlined dense').classes('q-mr-md').style('min-width:220px;max-width:260px;')
 
             async def _on_upload(e):
-                await upload_documento(e, target_id, selected_tipo.value, lambda ok: (ui.notify("Documento caricato!", color='positive') if ok else ui.notify("Errore caricamento", color='negative')))
+                await upload_documento(
+                    e,
+                    servizio_id,
+                    selected_tipo.value,
+                    lambda ok: ui.notify("Documento caricato!", color='positive') if ok else ui.notify("Errore caricamento", color='negative'),
+                )
 
-            ui.upload(label='Carica documento', auto_upload=True, on_upload=_on_upload).props('accept=.pdf,.jpg,.jpeg,.png flat').classes('custom-uploader')
+            ui.upload(
+                label='Carica documento per il servizio',
+                auto_upload=True,
+                on_upload=_on_upload,
+            ).props('accept=.pdf,.jpg,.jpeg,.png flat').classes('custom-uploader')
 
         ui.separator().classes('q-my-lg')
 
@@ -360,48 +443,25 @@ def documentazione_servizio_page(servizio_id: Optional[int] = None):
 
         def refresh_docs():
             container.clear()
-            # documenti del servizio (se applicabile)
-            if servizio_id is not None:
+            with container:
+                ui.label('Documenti del servizio').classes('text-h6 q-mb-sm')
                 try:
                     resp_srv = api_session.get(f'/documentazione/servizi/{servizio_id}/documenti')
                     srv_docs = resp_srv.json() if resp_srv.status_code == 200 else []
-                except Exception:
+                except Exception as e:
+                    print('[DEBUG] errore documenti servizio:', e)
                     srv_docs = []
                 srv_docs = [d for d in srv_docs if not d.get('is_deleted', False)]
-                with container:
-                    ui.label('Documenti del servizio').classes('text-h6 q-mb-sm')
-                    if srv_docs:
-                        for doc in srv_docs:
-                            _render_doc_row(doc, container, is_service=True, servizio_id=servizio_id, refresh_callback=refresh_docs)
-                    else:
-                        ui.label('Nessun documento associato al servizio.').classes('text-grey-7')
-
-            # documenti personali del cliente
-            cliente_id_local = cliente_id
-            if not cliente_id_local and servizio_id is not None:
-                try:
-                    srv_resp = api_session.get(f'/studio/servizi/{servizio_id}')
-                    if srv_resp.status_code == 200:
-                        srv = srv_resp.json()
-                        cliente_id_local = srv.get('cliente_id')
-                except Exception:
-                    cliente_id_local = None
-
-            with container:
-                ui.label('Documenti personali del cliente').classes('text-h6 q-mt-md q-mb-sm')
-                if cliente_id_local:
-                    try:
-                        resp = api_session.get(f'/documentazione/documenti/visualizza/{cliente_id_local}')
-                        client_docs = resp.json() if resp.status_code == 200 else []
-                    except Exception:
-                        client_docs = []
-                    client_docs = [d for d in client_docs if not d.get('is_deleted', False)]
-                    if client_docs:
-                        for doc in client_docs:
-                            _render_doc_row(doc, container, is_service=False)
-                    else:
-                        ui.label('Nessun documento personale caricato.').classes('text-grey-7')
+                if srv_docs:
+                    for doc in srv_docs:
+                        _render_doc_row(
+                            doc,
+                            container,
+                            is_service=True,
+                            servizio_id=servizio_id,
+                            refresh_callback=refresh_docs,
+                        )
                 else:
-                    ui.label('Cliente non identificato: impossibile recuperare documenti personali.').classes('text-negative')
+                    ui.label('Nessun documento associato al servizio.').classes('text-grey-7')
 
         refresh_docs()

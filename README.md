@@ -1,5 +1,170 @@
 # Il-mio-studio-frontend
 
+Frontend dell’applicazione “Il mio studio”, sviluppato in **Python** con **NiceGUI** (UI web) e integrazione con il backend FastAPI  
+(vedi repo backend: [Il-mio-studio-backend](https://github.com/yuu04rip/Il-mio-studio-backend)).
+
+---
+
+## 🏗️ Struttura del progetto
+
+```text
+Il-mio-studio-frontend/
+├── main.py
+├── requirements.txt
+├── README.md
+├── .gitignore
+├── .idea/
+├── .vscode/
+├── app/
+│   ├── api/
+│   │   ├── __init__.py
+│   │   └── api.py                      # wrapper per chiamate REST al backend
+│   ├── components/
+│   │   ├── __init__.py
+│   │   └── components.py               # componenti UI riutilizzabili (header, footer, ecc.)
+│   ├── models/
+│   │   ├── __init__.py
+│   │   ├── accettazione.py
+│   │   ├── cliente.py
+│   │   ├── dipendente_tecnico.py
+│   │   ├── documentazione.py
+│   │   ├── notaio.py
+│   │   ├── profile.py
+│   │   ├── servizio.py
+│   │   └── utente.py                   # modelli/dto lato frontend
+│   ├── pages/
+│   │   ├── __init__.py
+│   │   ├── auth.py                     # pagina login/registrazione
+│   │   ├── documentazione_servizio_page.py
+│   │   ├── home.py                     # home / landing dopo login
+│   │   ├── account/
+│   │   │   ├── __init__.py
+│   │   │   ├── account.py              # pagina profilo/account
+│   │   │   ├── account_email.py        # cambio email
+│   │   │   ├── account_mostra.py       # visualizzazione dati account
+│   │   │   ├── account_password.py     # cambio password
+│   │   │   └── logout.py               # logout utente
+│   │   ├── cliente/
+│   │   │   ├── __init__.py
+│   │   │   ├── chatbox.py
+│   │   │   ├── documentazione.py
+│   │   │   ├── documentazione_servizio_cliente_page.py
+│   │   │   ├── pagamento.py
+│   │   │   ├── servizio_cliente_dettagli_page.py
+│   │   │   └── servizi_cliente.py      # dashboard e flusso cliente
+│   │   ├── dipendente/
+│   │   │   ├── __init__.py
+│   │   │   ├── clienti_dipendente.py
+│   │   │   ├── servizi.py
+│   │   │   └── servizio_dettagli_page.py
+│   │   └── notaio/
+│   │       ├── __init__.py
+│   │       ├── accettazione.py
+│   │       ├── archiviazione.py
+│   │       ├── clienti.py
+│   │       ├── dipendenti.py
+│   │       └── servizio_dettagli_page_notaio.py
+└── static/
+    └── ...                             # asset statici (css, img, js) se presenti
+```
+
+---
+
+## 🚀 Come avviare il progetto in locale
+
+> Il frontend è progettato per lavorare insieme al backend  
+> [Il-mio-studio-backend](https://github.com/yuu04rip/Il-mio-studio-backend).  
+> Assicurati di avere il backend in esecuzione (es. su `http://localhost:8000`)
+> prima di provare i flussi che chiamano le API.
+
+### 1. Requisiti
+
+- **Python 3.11+** (consigliato usare la stessa versione usata nel backend)
+- `pip` aggiornato
+- Facoltativo ma consigliato: ambiente virtuale (`venv`)
+
+### 2. Clona la repository
+
+```bash
+git clone https://github.com/yuu04rip/Il-mio-studio-frontend.git
+cd Il-mio-studio-frontend
+```
+
+### 3. (Consigliato) Crea e attiva un ambiente virtuale
+
+**Su Windows (PowerShell):**
+```bash
+python -m venv .venv
+.\.venv\Scripts\activate
+```
+
+**Su macOS / Linux:**
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+### 4. Installa le dipendenze
+
+Assicurati che l’ambiente virtuale sia attivato, poi:
+
+```bash
+pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+Se durante l’installazione qualche pacchetto fallisce (es. problemi con `bcrypt` o librerie di sistema), installa prima le librerie richieste dalla tua piattaforma (ad es. `build-essential`, `libffi-dev`, ecc. su Linux) e ripeti il comando.
+
+### 5. Configura eventuali variabili d’ambiente
+
+Se il frontend deve chiamare il backend con un URL configurabile (es. `BACKEND_URL`), puoi:
+
+- creare un file `.env` nella root, oppure
+- impostare variabili d’ambiente nel tuo sistema / IDE.
+
+Esempio `.env` (backend in locale):
+
+```env
+BACKEND_URL=http://localhost:8000
+```
+
+Controlla in `app/api/api.py` se legge qualche variabile d’ambiente o URL hard-coded, così sai cosa personalizzare.
+
+### 6. Avvia l’applicazione
+
+Dalla root del progetto:
+
+```bash
+python main.py
+```
+
+Oppure, se usi direttamente NiceGUI con `uvicorn` (se configurato così nel progetto):
+
+```bash
+uvicorn main:app --reload
+```
+
+Dopo l’avvio:
+
+- Apri il browser su [http://localhost:8080](http://localhost:8080) oppure sulla porta indicata in console (dipende dalla configurazione di NiceGUI / FastAPI).
+
+---
+
+## 🧪 Come testare velocemente che tutto funzioni
+
+1. Verifica che l’app si avvii senza errori nel terminale.
+2. Prova il flusso base:
+    - apri `/` (home / login),
+    - esegui un login con le credenziali di test (se fornite dal backend),
+    - naviga tra:
+        - pagina account (`/account/...`),
+        - dashboard cliente (`/cliente/...`),
+        - dashboard dipendente (`/dipendente/...`),
+        - dashboard notaio (`/notaio/...`).
+3. Se il backend è in esecuzione su un’altra porta/macchina, verifica che le chiamate API da `app/api/api.py` puntino all’URL corretto.
+
+---
+
 ## 🛠️ Flusso di lavoro per collaborare in team
 
 ### 1. Clona la repository
@@ -36,21 +201,21 @@ git checkout -b feature/nome-feature-tuo-nome
 
 ### 4. Apri una Pull Request (PR) quando hai finito
 
-- **Consiglio:** Potete aprire la pull request direttamente da IntelliJ IDEA o da GitHub.
-    - Dopo aver fatto il push della branch:
-        - Su IntelliJ: “Create Pull Request” quando compare.
-        - Oppure: **Git → GitHub → Create Pull Request**.
-        - Oppure: Vai su GitHub → “Compare & pull request”.
-    - Seleziona la tua branch come “compare” e `main` come “base”.
-    - Scrivi **titolo** e **descrizione** (spiega cosa hai fatto!).
-    - Clicca “Create Pull Request” per inviare la PR.
-- L’admin (`yuu04rip`) controllerà la PR, può chiedere modifiche oppure approvare e fare il merge.
+- Dopo aver fatto il push della branch:
+    - Su IntelliJ: “Create Pull Request” quando compare.
+    - Oppure: **Git → GitHub → Create Pull Request**.
+    - Oppure: Vai su GitHub → “Compare & pull request”.
+- Seleziona la tua branch come “compare” e `main` come “base`.
+- Scrivi **titolo** e **descrizione** (spiega cosa hai fatto!).
+- Clicca “Create Pull Request” per inviare la PR.
+
+L’admin (`yuu04rip`) controllerà la PR, può chiedere modifiche oppure approvare e fare il merge.
 
 ---
 
 ### 5. Solo l’admin può fare merge su `main`
 
-- **Nessuno deve mergiare su `main` senza approvazione dell’admin.**
+- Nessuno deve mergiare su `main` senza approvazione dell’admin.
 - Se vengono richieste modifiche, aggiorna la tua branch (push) e la PR si aggiorna in automatico.
 
 ---
@@ -61,78 +226,20 @@ git checkout -b feature/nome-feature-tuo-nome
 - Segui sempre lo stesso flusso.
 
 ---
+### 7. Test
+Smoke test su main.py e su APIClient.
+```bash
+pytest app/tests -vv
+```
 
-## 📋 Regole base
+---
+## 📋 Regole base di collaborazione
 
 - Branch dedicate per ogni persona/feature.
 - PR **obbligatorie** per ogni modifica importante.
 - L’admin revisiona tutto prima del merge.
-- Se hai dubbi, **chiedi prima di fare danni!**
+- Se hai dubbi su come installare o su come far partire il progetto, chiedi prima di modificare file critici.
 
 ---
 
-## 🗂️ Suddivisione delle responsabilità (consigliata)
-
-Per tenere il lavoro ordinato, è utile suddividere le aree del frontend tra i membri del team.  
-Ecco alcune **idee di suddivisione**:
-
-### Esempio suddivisione:
-
-- **Login/Registrazione/Autenticazione:**  
-  _Responsabile: Mario_  
-  File: `auth.py`, pagine login, register, recupero password  
-  CSS: `auth-modern-card`, input, bottoni
-
-- **Dashboard Cliente:**  
-  _Responsabile: Giulia_  
-  File: `home_cliente.py`, `account.py`, `documentazione.py`, `chatbox.py`  
-  CSS: `glass-card`, `glass-title`, `glass-btn`
-
-- **Dashboard Dipendente:**  
-  _Responsabile: Luca_  
-  File: `home_dipendente.py`, `clienti_page_dipendente.py`, `servizi_dipendente_page.py`  
-  CSS: bottoni, card, input
-
-- **Dashboard Notaio:**  
-  _Responsabile: Riccardo_  
-  File: `home_notaio.py`, `accettazione_notaio.py`, `servizio_dettagli_page_notaio.py`  
-  CSS: card, bottoni, input
-
-- **Componenti globali:**  
-  _Responsabile: Team_  
-  File: `components/`, header, footer, notifiche, dialog
-
-- **API/Servizi:**  
-  _Responsabile: Backend/frontend referenti_  
-  File: `api/api.py`, test connessione, chiamate REST
-
-> **Consiglio:** Scrivi sempre chi è responsabile di una sezione nei commenti dei file!  
-> Esempio: `# Responsabile: Mario (login)` all’inizio del file.
-
----
-
-## 🎨 Suggerimenti per modifiche grafiche (frontend)
-
-- Ogni componente/pagina ha i suoi file Python (es. `account.py`, `cambia_email.py`).
-- Per personalizzare la grafica:
-    - Modifica le **classi CSS** nei file (es: `.glass-card`, `.glass-title`, `.glass-btn`).
-    - Cambia i **colori**, **font**, **padding**, **border-radius** nei CSS in fondo ai file o nel file globale.
-    - Puoi aggiungere CSS con `ui.add_head_html("""<style>...</style>""")` oppure creare un file `.css`.
-    - Per aggiungere **icone**, usa `ui.icon('nome_icona')` (nomi da [Material Icons](https://fonts.google.com/icons)).
-    - Per layout, usa `ui.row()`, `ui.column()`, `ui.card()`, `ui.button()`, ecc.
-    - Per dialog/pop-up: `ui.dialog()`.
-    - Per aggiungere HTML/CSS/JS custom: `ui.add_head_html`, `ui.add_body_html`, `ui.add_js_file`, `ui.add_css_file`.
-    - **Commenta le sezioni che modifichi** così il team capisce subito dove intervenire!
-    - Consulta la [documentazione NiceGUI](https://nicegui.io/documentation) per esempi e props.
-
----
-
-## 🛡️ Protezione branch (admin)
-
-L’admin imposta la protezione su `main`:
-- Serve almeno **una review** prima del merge.
-- Solo l’admin può approvare/mergiare.
-
----
-
-**Buon lavoro e buona collaborazione!**
+**Buon lavoro e buon sviluppo!**
