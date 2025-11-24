@@ -226,7 +226,13 @@ L’admin (`yuu04rip`) controllerà la PR, può chiedere modifiche oppure approv
 - Segui sempre lo stesso flusso.
 
 ---
+### 7. Test
+Smoke test su main.py e su APIClient.
+```bash
+pytest app/tests -vv
+```
 
+---
 ## 📋 Regole base di collaborazione
 
 - Branch dedicate per ogni persona/feature.
