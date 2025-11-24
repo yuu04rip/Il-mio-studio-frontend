@@ -76,9 +76,11 @@ def servizi_cliente_approvati_page(cliente_id: int):
         icon='home',
         on_click=lambda cid=cliente_id: _go_home(cid)
     ).classes('q-pa-md q-mb-md').style(
-        'background: linear-gradient(90deg, #2196f3 70%, #1976d2 100%) !important; color:#fff !important; border-radius:1.8em;'
+        'background: linear-gradient(90deg, #2196f3 70%, #1976d2 100%) !important; '
+        'color:#fff !important; border-radius:1.8em;'
     )
 
+    # determina ruolo dell'utente (dipendente / notaio / cliente) per usare la giusta pagina dettagli
     user = getattr(api_session, 'user', None)
     user_role = 'cliente'
     try:
@@ -132,6 +134,7 @@ def servizi_cliente_approvati_page(cliente_id: int):
             data_richiesta = _format_date(servizio.get('dataRichiesta'))
             data_consegna = _format_date(servizio.get('dataConsegna'))
 
+            # colore badge stato
             stato_lower = str(stato).lower()
             if 'approv' in stato_lower:
                 stato_color = 'positive'
@@ -143,13 +146,29 @@ def servizi_cliente_approvati_page(cliente_id: int):
                 stato_color = 'info'
             bg = _COLOR_MAP.get(stato_color, _COLOR_MAP['info'])
 
-            with ui.card().classes('q-pa-md q-mb-md').style('border-radius:0.9em;box-shadow:0 6px 18px rgba(0,0,0,0.04);'):
+            # creatore del servizio (come avevamo fatto per i servizi archiviati)
+            creato_da = servizio.get('creato_da')
+            op_nome = op_cognome = ''
+            if isinstance(creato_da, dict):
+                op_nome = (creato_da.get('nome') or '').strip()
+                op_cognome = (creato_da.get('cognome') or '').strip()
+            operatore_display = (op_nome + ' ' + op_cognome).strip()
+
+            with ui.card().classes('q-pa-md q-mb-md').style(
+                    'border-radius:0.9em;box-shadow:0 6px 18px rgba(0,0,0,0.04);'
+            ):
+                # Intestazione: tipo + codice + stato
                 with ui.row().classes('items-center').style('justify-content:space-between'):
                     with ui.row().classes('items-center'):
                         ui.label(tipo).classes('text-h6').style('margin-right:12px;font-weight:700')
-                        ui.badge(codice).props('outline').classes('q-ma-xs').style('background:#e3f2fd;color:#0d47a1')
-                    ui.badge(stato).classes('q-ma-xs').style(f'background:{bg}; color:white; border-radius:999px; padding:.2em .6em;')
+                        ui.badge(codice).props('outline').classes('q-ma-xs').style(
+                            'background:#e3f2fd;color:#0d47a1'
+                        )
+                    ui.badge(stato).classes('q-ma-xs').style(
+                        f'background:{bg}; color:white; border-radius:999px; padding:.2em .6em;'
+                    )
 
+                # Meta: date e codice interno
                 with ui.row().classes('q-mt-sm q-mb-sm').style('gap:24px'):
                     with ui.column().style('min-width:220px'):
                         ui.label('Data richiesta').classes('text-caption text-grey-6')
@@ -161,24 +180,22 @@ def servizi_cliente_approvati_page(cliente_id: int):
                         ui.label('Codice interno').classes('text-caption text-grey-6')
                         ui.label(servizio.get('codiceCorrente') or '-').classes('text-body2')
 
-                with ui.row().classes('items-center').style('justify-content:space-between'):
-                    dip = _get_dip_responsabile(servizio_id)
-                    if dip:
-                        nome = (dip.get('nome') or '').strip()
-                        cognome = (dip.get('cognome') or '').strip()
-                        dip_label = f"{nome} {cognome}".strip() or f"ID {dip.get('id')}"
-                        with ui.row().classes('items-center'):
-                            ui.icon('badge', size='18px').classes('q-mr-sm')
-                            ui.label('Dipendente responsabile').classes('text-caption text-grey-6 q-mr-sm')
-                            ui.label(dip_label).classes('text-body2')
-                    else:
-                        ui.label('Dipendente responsabile: info non disponibile').classes('text-caption text-grey-6')
-
+                # creatore + dipendente responsabile + azioni
+                with ui.row().classes('items-start').style('justify-content:space-between;margin-top:4px;'):
+                    with ui.column():
+                        # creatore del servizio (notaio/dipendente che l'ha creato)
+                        if operatore_display:
+                            with ui.row().classes('items-center'):
+                                ui.icon('person', size='18px').classes('q-mr-xs')
+                                ui.label('Creato da').classes('text-caption text-grey-6 q-mr-xs')
+                                ui.label(operatore_display).classes('text-body2')
+                    # azioni (pulsanti)
                     with ui.row().classes('items-center'):
                         ui.button(
                             'Vedi dettagli',
                             icon='info',
                             on_click=lambda s_id=servizio_id: ui.navigate.to(details_url(s_id))
                         ).classes('q-ml-sm').style(
-                            'background: linear-gradient(90deg,#1976d2,#1565c0); color:white; border-radius:12px;'
+                            'background: linear-gradient(90deg,#1976d2,#1565c0); '
+                            'color:white; border-radius:12px;'
                         )

@@ -19,7 +19,7 @@ def login_page():
                     password = ui.input('Password', password=True).props('outlined dense').classes('auth-modern-input')
                     codice_notarile_row = ui.row().classes('w-full justify-center')
                     with codice_notarile_row:
-                        codice_notarile = ui.input('Codice notarile (solo per notai)').props('outlined dense type=number').classes('auth-modern-input')
+                        codice_notarile = ui.input('Codice notarile (solo per notai)').props('outlined dense type=number min=0').classes('auth-modern-input')
                     codice_notarile_row.visible = False
 
                     msg = ui.label().classes('q-mt-sm text-negative').style('min-height:1.3em;')
@@ -156,7 +156,7 @@ def change_password_page():
                     email = ui.input('Email').props('outlined dense type=email').classes('auth-modern-input')
                     old_pwd = ui.input('Password attuale', password=True).props('outlined dense').classes('auth-modern-input')
                     new_pwd = ui.input('Nuova password', password=True).props('outlined dense').classes('auth-modern-input')
-                    codice_notarile = ui.input('Codice notarile (solo per notai)').props('outlined dense type=number').classes('auth-modern-input')
+                    codice_notarile = ui.input('Codice notarile (solo per notai)').props('outlined dense type=number min=0').classes('auth-modern-input')
                     msg = ui.label().classes('q-mt-sm text-negative').style('min-height:1.3em;')
                     def do_change():
                         msg.text = ""

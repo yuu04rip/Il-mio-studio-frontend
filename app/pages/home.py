@@ -35,7 +35,7 @@ def home_dipendente():
             ui.button('ACCOUNT', icon='person', on_click=lambda: ui.navigate.to('/account')) \
                 .classes('q-pa-xl').style('min-width:160px;')
         with ui.row().classes('q-gutter-lg'):
-            ui.button('SERVIZI DA SVOLGERE', icon='work', on_click=lambda: ui.navigate.to('/servizi')) \
+            ui.button('SERVIZI ARCHIVIATI', icon='work', on_click=lambda: ui.navigate.to('/servizi')) \
                 .classes('q-pa-xl').style('min-width:160px;')
 
 def home_notaio():
@@ -55,6 +55,8 @@ def home_notaio():
             ui.button('DIPENDENTI', icon='add', on_click=lambda: ui.navigate.to('/dipendenti')) \
                 .classes('q-pa-xl').style('min-width:160px;font-weight:600;font-size:1.08em;')
             ui.button('ACCETTAZIONE', icon='check', on_click=lambda: ui.navigate.to('/accettazione')) \
+                .classes('q-pa-xl').style('min-width:160px;font-weight:600;font-size:1.08em;')
+            ui.button('ARCHIVIAZIONE', icon='folder', on_click=lambda: ui.navigate.to('/servizi_notaio_archiviati')) \
                 .classes('q-pa-xl').style('min-width:160px;font-weight:600;font-size:1.08em;')
             
 
