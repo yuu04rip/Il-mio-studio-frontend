@@ -1,6 +1,8 @@
 from nicegui import ui
 from app.api.api import api_session
 from app.models.servizio import Servizio
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
 
 
 def get_icon_for_stato(stato):
@@ -88,19 +90,30 @@ def servizio_dettagli_page_notaio(id: str = None):
                     ui.label('Codice Corrente:').classes('text-weight-bold')
                     ui.label(str(servizio.codiceCorrente)).classes('text-body1')
 
+                    # Data Richiesta formattata
                     ui.label('Data Richiesta:').classes('text-weight-bold q-mt-md')
-                    ui.label(
-                        servizio.dataRichiesta.strftime('%d/%m/%Y %H:%M')
-                        if hasattr(servizio.dataRichiesta, 'strftime')
-                        else servizio.dataRichiesta
-                    ).classes('text-body1')
+                    try:
+                        if isinstance(servizio.dataRichiesta, str):
+                            data_richiesta_dt = datetime.fromisoformat(servizio.dataRichiesta)
+                        else:
+                            data_richiesta_dt = servizio.dataRichiesta
+                        data_richiesta_str = data_richiesta_dt.strftime('%d/%m/%Y %H:%M')
+                    except Exception:
+                        data_richiesta_str = servizio.dataRichiesta
+                    ui.label(data_richiesta_str).classes('text-body1')
 
+                    # Data Consegna +3 mesi
                     ui.label('Data Consegna:').classes('text-weight-bold q-mt-md')
-                    ui.label(
-                        servizio.dataConsegna.strftime('%d/%m/%Y %H:%M')
-                        if hasattr(servizio.dataConsegna, 'strftime')
-                        else servizio.dataConsegna
-                    ).classes('text-body1')
+                    try:
+                        if isinstance(servizio.dataConsegna, str):
+                            data_consegna_dt = datetime.fromisoformat(servizio.dataConsegna)
+                        else:
+                            data_consegna_dt = servizio.dataConsegna
+                        data_consegna_plus3 = data_consegna_dt + relativedelta(months=+3)
+                        data_consegna_str = data_consegna_plus3.strftime('%d/%m/%Y %H:%M')
+                    except Exception:
+                        data_consegna_str = servizio.dataConsegna
+                    ui.label(data_consegna_str).classes('text-body1')
 
         # --- INFORMAZIONI CLIENTE ---
         with ui.card().classes('q-pa-md q-mb-md').style('background:#e8f5e8;'):
@@ -126,7 +139,6 @@ def servizio_dettagli_page_notaio(id: str = None):
         with ui.card().classes('q-pa-md q-mb-md').style('background:#e3f2fd;'):
             ui.label('DIPENDENTE RESPONSABILE').classes('text-h6 text-weight-bold q-mb-md')
 
-            # 1) Creatore del servizio (notaio/dipendente che l'ha creato)
             creato_da = servizio_json.get('creato_da')
             op_nome = op_cognome = ''
             if isinstance(creato_da, dict):
@@ -140,9 +152,7 @@ def servizio_dettagli_page_notaio(id: str = None):
                     ui.label('Creato da:').classes('text-caption text-grey-6 q-mr-xs')
                     ui.label(operatore_display).classes('text-body1')
 
-            # (se vuoi riaggiungere anche il dipendente responsabile tecnico,
-            # puoi qui reinserire la chiamata a /studio/servizi/{id}/dipendenti)
-
+        # --- AZIONI ---
         with ui.row().classes('q-mt-lg justify-center'):
             if servizio.statoServizio in ['CREATO', 'IN_LAVORAZIONE']:
                 ui.button(
