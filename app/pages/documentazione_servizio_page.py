@@ -14,6 +14,7 @@ API_BASE = "http://localhost:8000"
 # mappa preview_id -> (path, mime, filename) per questo modulo
 _PREVIEW_FILES_DOC: Dict[str, dict] = {}
 
+# Tipi documento (includiamo anche patente nella mappa icone)
 TIPI_DOCUMENTO = [
     {"label": "Carta d'identità", "value": "carta_identita", "icon": "badge"},
     {"label": "Passaporto", "value": "passaporto", "icon": "flight"},
@@ -29,6 +30,21 @@ TIPI_DOCUMENTO_SERVIZIO = [
     {"label": "Preventivo", "value": "preventivo", "icon": "attach_money"},
 ]
 
+# --- Nuove costanti per DOCUMENTI PERSONALI e mappa icone ---
+PERSONAL_DOC_TYPES = {
+    "carta_identita",
+    "documento_proprieta",
+    "passaporto",
+    "tessera_sanitaria",
+}
+
+ICON_MAP = {
+    "carta_identita": "badge",
+    "passaporto": "flight",
+    "tessera_sanitaria": "medical_information",
+    "patente": "directions_car",
+    "documento_proprieta": "domain",  # icona suggerita per documento di proprietà
+}
 
 # --- Routes per preview (raw + wrapper) ---
 @app.get('/__preview_doc_raw/{preview_id}')
@@ -242,7 +258,8 @@ def _render_doc_row(
     filename = doc.get("filename") or f"documento_{doc.get('id')}"
     tipo_label = doc.get("tipo") or doc.get("label") or "Documento"
     ext = str(filename).split('.')[-1].lower() if filename and '.' in filename else ''
-    tipo_icon = "description"
+    # usa ICON_MAP per scegliere l'icona in base al tipo di documento
+    tipo_icon = ICON_MAP.get(doc.get('tipo'), "description")
     with container:
         with ui.card().style(
                 'background:#f4f7fb;border-radius:1.5em;min-height:72px;'
@@ -354,7 +371,11 @@ def documentazione_cliente_page(cliente_id: int):
                 except Exception as e:
                     print('[DEBUG] errore chiamata documenti personali:', e)
                     client_docs = []
-                client_docs = [d for d in client_docs if not d.get('is_deleted', False)]
+                # filtro: solo documenti personali e non deleted
+                client_docs = [
+                    d for d in client_docs
+                    if (d.get('tipo') in PERSONAL_DOC_TYPES) and not d.get('is_deleted', False)
+                ]
                 if client_docs:
                     for doc in client_docs:
                         _render_doc_row(doc, container, is_service=False)
@@ -430,6 +451,7 @@ def documentazione_servizio_page(servizio_id: int):
                     lambda ok: ui.notify("Documento caricato!", color='positive') if ok else ui.notify("Errore caricamento", color='negative'),
                 )
 
+            # modificato per usare props con class inlined (stile "prima")
             ui.upload(
                 label='Carica documento',
                 auto_upload=True,

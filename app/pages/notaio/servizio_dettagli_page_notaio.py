@@ -93,6 +93,12 @@ def servizio_dettagli_page_notaio(id: str = None):
             cliente_data.raise_for_status()
             cliente = cliente_data.json()
 
+            # dati creatore (ripristinati dalla "prima" versione)
+            creato_da = servizio_json.get('creato_da') or {}
+            creatore_nome = creato_da.get('nome')
+            creatore_cognome = creato_da.get('cognome')
+            creatore_id = servizio_json.get('creato_da_id')
+
         except Exception as e:
             ui.notify(f"Errore nel caricamento dei dettagli: {e}", color="negative")
             ui.label("Impossibile caricare i dettagli del servizio").classes('text-negative q-mt-md')
@@ -176,18 +182,20 @@ def servizio_dettagli_page_notaio(id: str = None):
         with ui.card().classes('q-pa-md q-mb-md').style('background:#e3f2fd;width:400px;'):
             ui.label('DIPENDENTE RESPONSABILE').classes('text-h6 text-weight-bold q-mb-md')
 
-            creato_da = servizio_json.get('creato_da')
-            op_nome = op_cognome = ''
-            if isinstance(creato_da, dict):
-                op_nome = (creato_da.get('nome') or '').strip()
-                op_cognome = (creato_da.get('cognome') or '').strip()
-            operatore_display = (op_nome + ' ' + op_cognome).strip()
+            # uso creatore_nome/creatore_cognome/creatore_id come nella "prima" versione
+            testo = None
+            if (creatore_nome or creatore_cognome) and creatore_id is not None:
+                testo = f"{creatore_nome or ''} {creatore_cognome or ''} (ID: {creatore_id})".strip()
+            elif creatore_id is not None:
+                testo = f"ID creatore: {creatore_id}"
+            else:
+                testo = "Informazione sul creatore non disponibile"
 
-            if operatore_display:
-                with ui.row().classes('items-center q-pa-xs q-mb-sm'):
-                    ui.icon('person', size='18px').classes('q-mr-sm')
-                    ui.label('Creato da:').classes('text-caption text-grey-6 q-mr-xs')
-                    ui.label(operatore_display).classes('text-body1')
+            with ui.row().classes('items-center q-pa-xs q-mb-sm'):
+                ui.icon('person', size='18px').classes('q-mr-sm')
+                ui.label(testo).classes(
+                    'text-body1' if creatore_id is not None else 'text-grey-7 italic'
+                )
 
         # --- AZIONI ---
         with ui.row().classes('q-mt-lg justify-center'):
@@ -195,11 +203,11 @@ def servizio_dettagli_page_notaio(id: str = None):
                 ui.button(
                     'Modifica Servizio',
                     icon='edit',
-                    on_click=lambda: ui.navigate.to(f'/servizi/{servizio_id}/modifica')
+                    on_click=lambda sid=servizio_id: ui.navigate.to(f'/servizi/{sid}/modifica')
                 ).classes('q-pa-md')
 
             ui.button(
                 'Visualizza Documentazione',
                 icon='folder',
-                on_click=lambda: ui.navigate.to(f'/documentaizone_servizio_cliente/{servizio_id}')
+                on_click=lambda sid=servizio_id: ui.navigate.to(f'/documentaizone_servizio_cliente/{servizio_id}')
             ).classes('q-pa-md')
