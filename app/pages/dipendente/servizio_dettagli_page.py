@@ -178,5 +178,5 @@ def servizio_dettagli_page(id: str = None):
             ui.button(
                 'Visualizza Documentazione',
                 icon='folder',
-                on_click=lambda sid=servizio_id: ui.navigate.to(f'/servizi/{sid}/documenti'),
+                on_click=lambda sid=servizio_id: ui.navigate.to(f'/documentaizone_servizio_cliente/{servizio_id}'),
             ).classes('q-pa-md')
