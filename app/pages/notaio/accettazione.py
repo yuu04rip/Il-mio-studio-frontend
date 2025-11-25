@@ -9,14 +9,23 @@ TIPI_SERVIZIO = {
 
 
 def accettazione_notaio_page():
-    ui.label('Gestione Servizi (Notaio) - Accettazione').classes(
+  with ui.card().classes(
+    'q-mx-auto q-my-xl shadow-3'
+).style(
+    'width: 900px;'
+    'background: rgba(240,240,240) !important;'
+    'box-shadow: 0 10px 32px 0 #1976d222, 0 2px 10px 0 #00000012 !important;'
+    'border-radius: 2.5em !important;'
+    'border: 1.7px solid #e3eaf1 !important;'
+    'backdrop-filter: blur(6px);'
+    'align-items:center;'
+):
+   with ui.row().classes('items-center q-mb-md').style('align-items:center; gap:40px; justify-content:center;'):
+    ui.label('Gestione Servizi').classes(
         'text-h5 q-mt-xl q-mb-lg'
     ).style(
-        'background:#1976d2;color:white;border-radius:2em;'
-        'padding:.5em 2.5em;display:block;text-align:center;'
-        'font-weight:600;letter-spacing:0.04em;'
+        'font-weight:600;font-size:2rem;color: #1976d2;letter-spacing: 0.5px;margin: 0;padding: 0;background: none;box-shadow: none;'
     )
-
     servizi_container = ui.column().classes('full-width').style('gap:24px;')
 
     def stato(servizio: dict) -> str:
@@ -67,11 +76,11 @@ def accettazione_notaio_page():
                                   f'Cliente #{servizio.get("cliente_id")}'
 
                 with ui.card().style(
-                        'background:#e3f2fd;border-radius:1em;min-height:78px;padding:1em 2em;'
+                        'background:#e3f2fd;border-radius:1em;min-height:72px;padding:1em 2em;width:100%;'
                 ):
                     ui.label(
                         f"{tipo} - {codice} | Stato: {stato_label}"
-                    ).classes('text-body1 q-mb-xs')
+                    ).classes('text-h6 q-mb-sm')
                     ui.label(
                         f"Cliente: {cliente_display}"
                     ).classes('text-caption text-grey-7 q-mb-sm')

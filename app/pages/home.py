@@ -2,7 +2,6 @@ from nicegui import ui
 from app.pages.cliente.chatbox import chatbox
 
 def home_cliente(cliente_id: int):
-        
     ui.add_head_html("""
     <style>
 /* 🌄 SFONDO GENERALE DELLA PAGINA */
@@ -36,7 +35,7 @@ body {
     align-items: center !important;     /* centra orizzontalmente */
 }
 
-/* 🏷️ LABEL "HOME" (titolo principale) */
+/* 🏷 LABEL "HOME" (titolo principale) */
 .text-h5 {
     /* 🔹 Testo e colore */
     font-size: 1.8rem !important;             /* leggermente più grande */
@@ -56,7 +55,7 @@ body {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* ombra leggera per rilievo */
 }
 
-/* 🎛️ CONTENITORE DELLE RIGHE DEI BOTTONI */
+/* 🎛 CONTENITORE DELLE RIGHE DEI BOTTONI */
 .q-row {
     justify-content: center !important; /* centra orizzontalmente i bottoni */
     align-items: center !important;     /* centra verticalmente nella riga */
@@ -95,57 +94,13 @@ body {
 
 
 
+
+
     from app.pages.cliente.chatbox import chatbox
 
 
 def home_cliente(cliente_id: int):
-
-    ui.add_head_html("""
-    <style>
-    /* 🧱 CARD PRINCIPALE (contenitore centrale) */
-    .q-card {
-        background: rgb(240, 240, 240) !important;
-        border-radius: 18px !important;
-        box-shadow: 0 8px 24px rgba(0, 0, 0) !important;
-        padding: 48px !important;
-        width: 80% !important;
-        max-width: 1000px !important;
-        min-height: 600px !important;
-        margin: 60px auto !important;
-        display: flex !important;
-        flex-direction: column !important;
-        justify-content: center !important;
-        align-items: center !important;
-        transition: all 0.4s ease-in-out !important;
-    }
-
-    /* 🔹 Stato normale (chat chiusa) */
-    .q-card.default {
-        transform: translateY(0);
-    }
-
-    /* 🔹 Stato con chat aperta */
-    .q-card.chat-open {
-        width: 90% !important;
-        max-width: 1200px !important;
-        min-height: 800px !important;
-        transform: translateY(-50px);
-    }
-
-    /* 🔹 Sposta più in alto l’etichetta HOME */
-    .q-card.chat-open .text-h5 {
-        transform: translateY(-60px);
-        transition: transform 0.4s ease;
-    }
-
-    /* 🔹 Pulsanti si abbassano leggermente */
-    .q-card.chat-open .q-row:nth-of-type(2),
-    .q-card.chat-open .q-row:nth-of-type(3) {
-        transform: translateY(20px);
-        transition: transform 0.4s ease;
-    }
-    </style>
-    """)
+    ui.add_head_html('<link rel="stylesheet" href="/static/stylesHome.css">')
 
     with ui.card().classes('q-pa-xl q-mt-xl q-mx-auto'):
         ui.label('HOME').classes('text-h5 q-mb-lg').style(
@@ -163,6 +118,7 @@ def home_cliente(cliente_id: int):
     chatbox(cliente_id)
 
 def home_dipendente():
+    ui.add_head_html('<link rel="stylesheet" href="/static/stylesHome.css">')
     with ui.card().classes('q-pa-xl q-mt-xl q-mx-auto'):
         ui.label('HOME').classes('text-h5 q-mb-lg') \
             .style('background:#2196f3;color:white;border-radius:2em;padding:.5em 3em;display:block;text-align:center;')
@@ -176,9 +132,9 @@ def home_dipendente():
                 .classes('q-pa-xl').style('min-width:160px;')
 
 def home_notaio():
+    ui.add_head_html('<link rel="stylesheet" href="/static/stylesHome.css">')
     with ui.card().classes('q-pa-xl q-mt-xl q-mx-auto shadow-5') \
             .style('max-width:550px;background:#fafdff;'):
-        ui.icon('account_circle').style('font-size:3em;color:#1976d2;margin-bottom:12px;')
         ui.label('HOME').classes('text-h5 q-mb-lg').style(
             'background:#2196f3;color:white;border-radius:2em;padding:.5em 3em;display:block;text-align:center;letter-spacing:0.04em;font-weight:700;font-size:1.32em;margin-bottom:28px;'
         )
@@ -194,5 +150,3 @@ def home_notaio():
                 .classes('q-pa-xl').style('min-width:160px;font-weight:600;font-size:1.08em;')
             ui.button('ARCHIVIAZIONE', icon='folder', on_click=lambda: ui.navigate.to('/servizi_notaio_archiviati')) \
                 .classes('q-pa-xl').style('min-width:160px;font-weight:600;font-size:1.08em;')
-            
-

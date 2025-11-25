@@ -52,6 +52,50 @@ def _get_cliente_min_info(cliente_id: Optional[int]) -> dict:
 
 
 def servizi_dipendente_page():
+    ui.add_head_html("""
+<style>
+.custom-label {
+    font-weight: 600;
+    font-size: 2rem; /* aumentato da 1.2rem a 2rem */
+    color: #1976d2;
+    letter-spacing: 0.5px;
+    margin: 0;
+    padding: 0;
+    background: none;
+    box-shadow: none;
+}
+.custom-button-blue-light {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    background: linear-gradient(90deg, #2196f3 70%, #1976d2 100%) !important;
+    color: white !important;
+    font-weight: 600 !important;
+    border-radius: 2.5em !important;
+    padding: 0.8em 1.2em !important;
+    font-size: 1.2rem !important;
+    width: auto !important;
+    max-width: 300px !important;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2) !important;
+    letter-spacing: 0.5px !important;
+}
+.custom-button-blue-light-panels {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    background: linear-gradient(90deg, #2196f3 70%, #1976d2 100%) !important;
+    color: white !important;
+    font-weight: 600 !important;
+    border-radius: 2.5em !important;
+    padding: 0.8em 1.2em !important;
+    font-size: 1.2rem !important;
+    width: 100% !important;
+    max-width: 300px !important;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2) !important;
+    letter-spacing: 0.5px !important;
+}
+</style>
+    """)
     """
     Pagina dipendente: mostra SOLO servizi archiviati.
     Azioni disponibili:
@@ -77,17 +121,17 @@ def servizi_dipendente_page():
         return
 
     # Titolo pagina (archiviati)
-    with ui.card().classes('q-pa-xl q-mt-xl q-mx-auto'):
-        with ui.row().classes('items-center q-mb-md'):
-            ui.icon('archive', size='40px').classes('q-mr-md')
+    with ui.card().classes('q-pa-xl q-mt-xl q-mx-auto').style('width: 900px;background: rgba(240,240,240) !important;box-shadow: 0 10px 32px 0 #1976d222, 0 2px 10px 0 #00000012 !important;border-radius: 2.5em !important;border: 1.7px solid #e3eaf1 !important;backdrop-filter: blur(6px);align-items: center;'):
+        with ui.row().classes('items-center q-mb-md').style('align-items: center; gap: 40px;justify-content: space-between;'):
+            ui.icon('archive', size='40px').classes('q-mr-md').style('color:#1976d2')
             ui.label('SERVIZI ARCHIVIATI').classes(
-                'text-h5').style('background:#263238;color:white;border-radius:2em;padding:.5em 2em;')
+                'custom-label')
 
         # Liste ORIGINALI - i servizi archiviati restituiti dall'API
         servizi_originali = []
         servizi_display = []
 
-        servizi_container = ui.column().classes('full-width').style('gap:18px;')
+        servizi_container = ui.column().classes('full-width').style('gap:18px;').style('align-items: center;')
 
         def carica_tutti_servizi_archiviati():
             """
@@ -127,7 +171,7 @@ def servizi_dipendente_page():
 
             for servizio in servizi_display:
                 with servizi_container:
-                    with ui.card().classes('q-pa-md q-mb-md').style('background:#f5f5f5;'):
+                    with ui.card().classes('q-pa-md q-mb-md').style('background:#e0f7fa;border-radius:1em;min-height:72px;padding:1em 2em;width:100%;'):
                         stato = str(servizio.statoServizio).upper()
                         nome = getattr(servizio, 'clienteNome', None) or getattr(servizio, 'cliente_nome', None)
                         cognome = getattr(servizio, 'clienteCognome', None) or getattr(servizio, 'cliente_cognome', None)
@@ -149,16 +193,18 @@ def servizi_dipendente_page():
                         # Azioni: sola lettura + dearchiviazione
                         with ui.row().classes('q-gutter-md'):
                             ui.button(
-                                'Visualizza dettagli',
+                                'dettagli',
                                 icon='visibility',
+                                color='primary',
                                 on_click=lambda s=servizio: ui.navigate.to(f'/servizi/{s.id}/dettagli')
-                            ).classes('q-pa-md')
+                            ).props('flat round type="button"')
 
                             ui.button(
                                 'Documentazione',
                                 icon='folder',
+                                color='accent',
                                 on_click=lambda s=servizio: ui.navigate.to(f'/servizi/{s.id}/documenti')
-                            ).classes('q-pa-md')
+                            ).props('flat round type="button"')
 
                             # Bottone Dearchivia per riportare il servizio nello stato attivo
                             def dearchivia_and_refresh(sid=servizio.id):
@@ -174,9 +220,9 @@ def servizi_dipendente_page():
                             ui.button(
                                 'Dearchivia',
                                 icon='unarchive',
+                                color='secondary',
                                 on_click=lambda sid=servizio.id: dearchivia_and_refresh(sid)
-                            ).classes('q-pa-md')
-
+                            ).props('flat round type="button"')
         # caricamento iniziale della lista archiviati
         carica_tutti_servizi_archiviati()
 

@@ -54,9 +54,30 @@ _COLOR_MAP = {
 }
 
 def servizi_cliente_approvati_page(cliente_id: int):
+    ui.add_head_html("""
+<style>
+
+.custom-button-blue-light {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    background: linear-gradient(90deg, #2196f3 70%, #1976d2 100%) !important;
+    color: white !important;
+    font-weight: 600 !important;
+    border-radius: 2.5em !important;
+    padding: 0.8em 1.2em !important;
+    font-size: 1.2rem !important;
+    width: 300px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2) !important;
+    letter-spacing: 0.5px !important;
+    heigth:20 px;
+}
+</style>
+    """)
     """Pagina per visualizzare tutti i servizi APPROVATI di un cliente (UI più curata)"""
 
     def _go_home(cid: int = cliente_id):
+        
         user = getattr(api_session, 'user', None)
         try:
             if user and hasattr(api_session, 'get_dipendente_id_by_user'):
@@ -76,14 +97,6 @@ def servizi_cliente_approvati_page(cliente_id: int):
             pass
         ui.navigate.to(f'/home_cliente?cliente_id={cid}')
 
-    ui.button(
-        'Torna alla Home',
-        icon='home',
-        on_click=lambda cid=cliente_id: _go_home(cid)
-    ).classes('q-pa-md q-mb-md').style(
-        'background: linear-gradient(90deg, #2196f3 70%, #1976d2 100%) !important; '
-        'color:#fff !important; border-radius:1.8em;'
-    )
 
     # determina ruolo dell'utente
     user = getattr(api_session, 'user', None)
@@ -113,7 +126,7 @@ def servizi_cliente_approvati_page(cliente_id: int):
 
     # Card principale
     with ui.card().classes('q-pa-xl q-mt-xl q-mx-auto').style(
-            'background:#f8fafc;border-radius:1.2em;max-width:960px;'
+            'background: rgba(240,240,240); border-radius:2.5em;'
     ):
         ui.label('SERVIZI APPROVATI').classes('text-h5').style(
             'color:#1565c0;text-align:center;font-weight:700;margin-bottom:10px;'
@@ -164,19 +177,15 @@ def servizi_cliente_approvati_page(cliente_id: int):
             operatore_display = (op_nome + ' ' + op_cognome).strip()
 
             with ui.card().classes('q-pa-md q-mb-md').style(
-                    'border-radius:0.9em;box-shadow:0 6px 18px rgba(0,0,0,0.04);'
+                    'background:#e3f2fd;border-radius:1em;min-height:72px;padding:1em 2em;width:100%;'
             ):
                 # Intestazione: tipo + codice + stato
                 with ui.row().classes('items-center').style('justify-content:space-between'):
                     with ui.row().classes('items-center'):
                         ui.label(tipo).classes('text-h6').style('margin-right:12px;font-weight:700')
-                        ui.badge(codice).props('outline').classes('q-ma-xs').style(
-                            'background:#e3f2fd;color:#0d47a1'
-                        )
-                    ui.badge(stato).classes('q-ma-xs').style(
-                        f'background:{bg}; color:white; border-radius:999px; padding:.2em .6em;'
-                    )
-
+                        ui.label(codice).classes('text-h6').style('margin-right:12px;font-weight:700')
+                        ui.label(stato).classes('text-h6').style('margin-right:12px;font-weight:700')
+                        
                 # Meta: date e codice interno
                 with ui.row().classes('q-mt-sm q-mb-sm').style('gap:24px'):
                     with ui.column().style('min-width:220px'):

@@ -7,7 +7,7 @@ def chatbox(cliente_id: int):
     <style>
     :root {
         --chat-toggle-size: 50px;
-        --chat-toggle-bottom: 25px;
+        --chat-toggle-bottom: 125px;
         --chat-toggle-color: #7267EF;
         --chat-panel-width: 400px;
         --chat-panel-height: 420px;
@@ -113,41 +113,43 @@ def chatbox(cliente_id: int):
         box-shadow: inset 0 1px 4px rgba(0,0,0,0.08);
     }
 
-    /* 🔘 Pulsanti affiancati */
-    .chat-buttons-row {
-        display: flex;
-        justify-content: space-between;
-        gap: 8px;
-        padding-top: 4px;
-    }
+/* 🔘 Pulsanti affiancati */
+.chat-buttons-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 80px;
+    padding-top: 4px;
+}
 
-    .chat-btn {
-        flex: 1 1 auto !important;
-        width: 48% !important;
-        height: 32px !important;
-        min-height: unset !important;
-        border-radius: 10px !important;
-        font-size: 0.85em !important;
-        font-weight: 600 !important;
-        background: var(--chat-toggle-color) !important;
-        color: white !important;
-        box-shadow: 0 3px 6px rgba(0,0,0,0.2);
-        transition: background 0.2s ease;
-    }
+.chat-btn {
+    flex: 1 1 auto !important;
+    width: 150px !important;
+    height: 32px !important;
+    min-height: unset !important;
+    border-radius: 10px !important;
+    font-size: 0.85em !important;
+    font-weight: 600 !important;
+    background: var(--chat-toggle-color) !important;
+    color: white !important;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+    transition: background 0.2s ease;
+}
 
-    .chat-btn:hover {
-        background: #5b46d1 !important;
-    }
+.chat-btn:hover {
+    background: #5b46d1 !important;
+}
 
-    .chat-btn.close {
-        background: #999 !important;
-    }
+.chat-btn.close {
+    background: #999 !important;
+}
 
-    .chat-btn.close:hover {
-        background: #777 !important;
-    }
+.chat-btn.close:hover {
+    background: #777 !important;
+}
+
     </style>
     """)
+
 
     # ---------- LOGICA ----------
     chat_visible = False

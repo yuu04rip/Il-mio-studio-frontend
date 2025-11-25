@@ -12,7 +12,6 @@ TIPI_SERVIZIO = {
     'preventivo': 'Preventivo',
 }
 
-
 def get_icon_for_stato(stato):
     icons = {
         'CREATO': 'pending_actions',
@@ -26,160 +25,259 @@ def get_icon_for_stato(stato):
 
 
 def clienti_page_dipendente():
-    ui.label('Clienti').classes('text-h5 q-mt-xl q-mb-lg').style(
-        'background:#1976d2;color:white;border-radius:2em;padding:.5em 2.5em;'
-        'display:block;text-align:center;font-weight:600;letter-spacing:0.04em;'
-    )
 
-    # mostra il nome del dipendente (se disponibile in api_session.user)
-    user = getattr(api_session, 'user', None) or {}
-    user_nome = user.get('nome') or user.get('username') or ''
-    user_cognome = user.get('cognome') or ''
-    if user_nome or user_cognome:
-        ui.label(f'Operatore: {user_nome} {user_cognome}').classes('text-subtitle2 q-mb-sm')
+        # ---- CSS personalizzato ----
+    ui.html('''
+    <style>
+.clienti-title {
+    color:#1976d2;
+    padding: 0.6em 2.8em;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    display: block;
+    text-align: center;
+    margin: 2em auto 1.5em auto;
+    width: fit-content;
+    font-size: 32px;
+}
+.text-h6 {
+    color:#1976d2;
+    padding: 0.6em 2.8em;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    display: block;
+    text-align: center;
+    width: fit-content;
+    font-size: 24px;
+            }
+        
+.search-bar {
+    width: 600px;
+    max-width: 100%;
+    margin: 0 auto;
+    border-radius: 30px;
+    background: #fff;
+    border: 2px solid #ccc;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.05);
+    padding: 8px 16px;
+    transition: all 0.18s ease;
+}
+.search-bar input {
+    border: none !important;
+    outline: none !important;
+    background: transparent !important;
+    font-size: 1.1rem !important;
+    font-weight: 500 !important;
+    color: #333 !important;
+}
+.search-bar input::placeholder { color:#888; font-size:1.1rem; }
+.search-bar:focus-within { border-color:#2196f3; box-shadow:0 0 8px rgba(33,150,243,0.18); }
 
-    # tenta di recuperare dipendente_id (utile per la creazione del servizio e per mostrare azioni)
-    try:
-        dipendente_id = api_session.get_dipendente_id_by_user(user['id']) if user and user.get('id') else None
-        print('[DEBUG] dipendente_id risolto:', dipendente_id)
-    except Exception as e:
-        dipendente_id = None
-        print('[DEBUG] errore get_dipendente_id_by_user:', e)
-        ui.notify(f"Impossibile recuperare il dipendente tecnico per l'utente corrente: {e}", color='negative')
+.q-card.main-card {
+    background:#f0f0f0;
+    border-radius: 18px;
+    padding: 20px;
+    width: 50%;
+    max-width: 1000px;
+    margin: 60px auto;
+    display:flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+.client-card {
+    background:#e3f2fd;
+    border-radius:0.8em;
+    min-height:50px;
+    padding:0.5em 1.2em;
+    margin-bottom: 8px;
+    width:100%;
+    box-shadow:0 2px 6px rgba(0,0,0,0.06);
+}
+.custom-button-blue-light-panels {
+    display: flex !important;
+    background: linear-gradient(90deg, #2196f3 70%, #1976d2 100%) !important;
+    color: white !important;
+    font-weight: 600 !important;
+    border-radius: 2.5em !important;
+    padding: 0.2em 1.2em !important;
+    font-size: 1.2rem !important;
+    width: 150px !important;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2) !important;
+    letter-spacing: 0.5px !important;
+    padding: 0.2em 1.2em !important;
+}
+.client-card .q-btn { border-radius:12px; min-width:120px; font-weight:600; }
+@media (max-width:720px) {
+    .q-card.main-card { width:92%; padding:14px; }
+    </style>
+    ''')
 
-    # dialog globale di creazione servizio (riutilizzabile per ogni cliente)
-    crea_servizio_dialog = ui.dialog()
-    crea_msg = None
-    selected_cliente = {'id': None, 'display': ''}
+    with ui.row().classes('justify-center items-center').style('width:100%; margin-top:2em;'):
+        # main card wrapper: (solo presentazione, non tocca la logica)
+        with ui.card().classes('main-card'):
+            ui.label('CLIENTI').classes('text-h5 q-mt-xl q-mb-lg clienti-title').style(
+                'color:#1976d2;padding:.5em 2.5em;'
+                'text-align:center;font-weight:600;letter-spacing:0.04em;'
+            )
 
-    # definiamo i widget del dialog fuori così possiamo aggiornarli da open_crea_dialog_for_cliente
-    with crea_servizio_dialog:
-        with ui.card().classes('q-pa-md').style('max-width:420px;'):
-            ui.label('Crea nuovo servizio').classes('text-h6 q-mb-md')
-            cliente_label = ui.label('').classes('q-mb-sm')
-            tipo_input = ui.select(TIPI_SERVIZIO, label="Tipo servizio").props("outlined dense").classes("q-mb-sm")
-            codice_corrente_input = ui.input('Codice corrente (opzionale)').props('outlined dense').classes('q-mb-sm')
-            crea_msg = ui.label().classes('text-negative q-mb-sm')
+            # mostra il nome del dipendente (se disponibile in api_session.user)
+            user = getattr(api_session, 'user', None) or {}
+            user_nome = user.get('nome') or user.get('username') or ''
+            user_cognome = user.get('cognome') or ''
+            if user_nome or user_cognome:
+                ui.label(f'Operatore: {user_nome} {user_cognome}').classes('text-subtitle2 q-mb-sm')
 
-            def submit_crea():
-                print('[DEBUG] submit_crea chiamato, selected_cliente:', selected_cliente, 'tipo:', tipo_input.value)
-                # validazioni minime
-                if not selected_cliente.get('id'):
-                    crea_msg.text = 'Cliente non selezionato'
-                    return
-                if not tipo_input.value:
-                    crea_msg.text = 'Seleziona un tipo di servizio!'
-                    return
+            # tenta di recuperare dipendente_id (utile per la creazione del servizio e per mostrare azioni)
+            try:
+                dipendente_id = api_session.get_dipendente_id_by_user(user['id']) if user and user.get('id') else None
+                print('[DEBUG] dipendente_id risolto:', dipendente_id)
+            except Exception as e:
+                dipendente_id = None
+                print('[DEBUG] errore get_dipendente_id_by_user:', e)
+                ui.notify(f"Impossibile recuperare il dipendente tecnico per l'utente corrente: {e}", color='negative')
 
-                # se non abbiamo dipendente_id, non possiamo impostare il creatore
-                if dipendente_id is None:
-                    crea_msg.text = 'Dipendente non riconosciuto: impossibile impostare il creatore del servizio.'
-                    ui.notify('Dipendente non riconosciuto, effettua di nuovo il login.', color='negative')
-                    print('[DEBUG] submit_crea: dipendente_id è None, blocco creazione')
-                    return
+            # dialog globale di creazione servizio (riutilizzabile per ogni cliente)
+            crea_servizio_dialog = ui.dialog()
+            crea_msg = None
+            selected_cliente = {'id': None, 'display': ''}
 
-                codice_raw = (codice_corrente_input.value or '').strip()
-                try:
-                    codice_val = int(codice_raw) if codice_raw != '' else None
-                except Exception:
-                    crea_msg.text = 'Codice corrente deve essere un numero intero'
-                    return
+            # definiamo i widget del dialog fuori così possiamo aggiornarli da open_crea_dialog_for_cliente
+            with crea_servizio_dialog:
+                with ui.card().classes('q-pa-md').style('max-width:400px;width:100%; align-items:center;border-radius:12px;background-color: #FFF8E7; padding: 0.5rem !important; '):
+                    ui.label('Crea servizio').classes('text-h6 q-mb-md')
+                    cliente_label = ui.label('').classes('q-mb-sm')
+                    with ui.row().classes('q-pa-sm').style('align-items:center'):
+                        tipo_input = ui.select(TIPI_SERVIZIO, label="Tipo servizio").props("outlined dense").classes("q-mb-sm")
+                        codice_corrente_input = ui.input('Codice corrente (opzionale)').props('outlined dense').classes('q-mb-sm')
+                    crea_msg = ui.label().classes('text-negative q-mb-sm')
 
-                try:
-                    cliente_for_nav = int(selected_cliente['id'])
-                    print('[DEBUG] chiamata api_session.crea_servizio con:',
-                          'cliente_id=', cliente_for_nav,
-                          'tipo=', tipo_input.value,
-                          'codice_corrente=', codice_val,
-                          'dipendente_id=', dipendente_id)
+                    def submit_crea():
+                        print('[DEBUG] submit_crea chiamato, selected_cliente:', selected_cliente, 'tipo:', tipo_input.value)
+                        # validazioni minime
+                        if not selected_cliente.get('id'):
+                            crea_msg.text = 'Cliente non selezionato'
+                            return
+                        if not tipo_input.value:
+                            crea_msg.text = 'Seleziona un tipo di servizio!'
+                            return
 
-                    # chiamata API: passiamo esplicitamente anche dipendente_id
-                    res = api_session.crea_servizio(
-                        cliente_for_nav,
-                        tipo_input.value,
-                        codice_corrente=codice_val,
-                        dipendente_id=dipendente_id,
-                    )
+                        # se non abbiamo dipendente_id, non possiamo impostare il creatore
+                        if dipendente_id is None:
+                            crea_msg.text = 'Dipendente non riconosciuto: impossibile impostare il creatore del servizio.'
+                            ui.notify('Dipendente non riconosciuto, effettua di nuovo il login.', color='negative')
+                            print('[DEBUG] submit_crea: dipendente_id è None, blocco creazione')
+                            return
 
-                    # debug / log risposta
-                    try:
-                        print('crea_servizio response (raw):', repr(res))
-                        if hasattr(res, 'json'):
-                            print('crea_servizio response JSON:', res.json())
-                    except Exception as e:
-                        print('crea_servizio: risposta non-json / tipo:', type(res), 'errore:', e)
+                        codice_raw = (codice_corrente_input.value or '').strip()
+                        try:
+                            codice_val = int(codice_raw) if codice_raw != '' else None
+                        except Exception:
+                            crea_msg.text = 'Codice corrente deve essere un numero intero'
+                            return
 
-                    # estraiamo eventuale oggetto creato e id per mostrare subito il servizio
-                    created_obj = None
-                    created_id = None
-                    try:
-                        if isinstance(res, dict):
-                            created_obj = res
-                        elif hasattr(res, 'json'):
-                            created_obj = res.json()
-                        if created_obj:
-                            created_id = created_obj.get('id')
-                        print('[DEBUG] created_id:', created_id, 'created_obj:', created_obj)
-                    except Exception as e:
-                        print('[DEBUG] errore parse risposta crea_servizio:', e)
-                        created_obj = None
-                        created_id = None
+                        try:
+                            cliente_for_nav = int(selected_cliente['id'])
+                            print('[DEBUG] chiamata api_session.crea_servizio con:',
+                                'cliente_id=', cliente_for_nav,
+                                'tipo=', tipo_input.value,
+                                'codice_corrente=', codice_val,
+                                'dipendente_id=', dipendente_id)
 
-                    # estraiamo eventuale codice generato per notifica
-                    codice_generato = None
-                    try:
-                        if created_obj:
-                            codice_generato = created_obj.get('codiceServizio') or created_obj.get('codice_servizio')
-                    except Exception as e:
-                        print('[DEBUG] errore estrazione codice_generato:', e)
-                        codice_generato = None
+                            # chiamata API: passiamo esplicitamente anche dipendente_id
+                            res = api_session.crea_servizio(
+                                cliente_for_nav,
+                                tipo_input.value,
+                                codice_corrente=codice_val,
+                                dipendente_id=dipendente_id,
+                            )
 
-                    if codice_generato:
-                        ui.notify(f'Servizio creato! Codice: {codice_generato}', color='positive')
-                    else:
-                        ui.notify('Servizio creato!', color='positive')
+                            # debug / log risposta
+                            try:
+                                print('crea_servizio response (raw):', repr(res))
+                                if hasattr(res, 'json'):
+                                    print('crea_servizio response JSON:', res.json())
+                            except Exception as e:
+                                print('crea_servizio: risposta non-json / tipo:', type(res), 'errore:', e)
 
-                    # pulizia campi
-                    tipo_input.value = None
-                    codice_corrente_input.value = ''
-                    cliente_display = selected_cliente.get('display', f'id {cliente_for_nav}')
-                    selected_cliente['id'] = None
-                    selected_cliente['display'] = ''
-                    cliente_label.text = ''
+                            # estraiamo eventuale oggetto creato e id per mostrare subito il servizio
+                            created_obj = None
+                            created_id = None
+                            try:
+                                if isinstance(res, dict):
+                                    created_obj = res
+                                elif hasattr(res, 'json'):
+                                    created_obj = res.json()
+                                if created_obj:
+                                    created_id = created_obj.get('id')
+                                print('[DEBUG] created_id:', created_id, 'created_obj:', created_obj)
+                            except Exception as e:
+                                print('[DEBUG] errore parse risposta crea_servizio:', e)
+                                created_obj = None
+                                created_id = None
 
-                    crea_servizio_dialog.close()
-                    # apriamo la vista dei servizi inline per quel cliente e passiamo created info
-                    print('[DEBUG] apro mostra_servizi_cliente_dialog per cliente_id=', cliente_for_nav)
-                    mostra_servizi_cliente_dialog(
-                        cliente_for_nav,
-                        cliente_display,
-                        created_id=created_id,
-                        created_obj=created_obj,
-                    )
-                except Exception as e:
-                    crea_msg.text = f'Errore: {e}'
-                    ui.notify(f'Errore creazione servizio: {e}', color='negative')
-                    print('[DEBUG] eccezione in submit_crea:', e)
+                            # estraiamo eventuale codice generato per notifica
+                            codice_generato = None
+                            try:
+                                if created_obj:
+                                    codice_generato = created_obj.get('codiceServizio') or created_obj.get('codice_servizio')
+                            except Exception as e:
+                                print('[DEBUG] errore estrazione codice_generato:', e)
+                                codice_generato = None
 
-            with ui.row().classes('q-mt-md'):
-                ui.button('Crea', on_click=submit_crea).classes('q-pa-md')
-                ui.button('Annulla', on_click=lambda: crea_servizio_dialog.close()).classes('q-ml-md q-pa-md')
+                            if codice_generato:
+                                ui.notify(f'Servizio creato! Codice: {codice_generato}', color='positive')
+                            else:
+                                ui.notify('Servizio creato!', color='positive')
 
-    # barra di ricerca + checkbox "solo i miei"
-    row = ui.row().classes('items-center q-mb-md').style('gap:12px;')
-    with row:
-        search = ui.input('', placeholder="Cerca per nome o cognome...").props('outlined dense').style(
-            'max-width:320px;margin-bottom:0;'
-        )
-        only_mine = ui.checkbox('Solo i miei', value=True).props('dense')
-        ui.button('Aggiorna', icon='refresh', on_click=lambda: carica_clienti()).props('flat')
+                            # pulizia campi
+                            tipo_input.value = None
+                            codice_corrente_input.value = ''
+                            cliente_display = selected_cliente.get('display', f'id {cliente_for_nav}')
+                            selected_cliente['id'] = None
+                            selected_cliente['display'] = ''
+                            cliente_label.text = ''
 
-    # area risultati
-    clienti_list = ui.column().classes('full-width').style('gap:18px;')
+                            crea_servizio_dialog.close()
+                            # apriamo la vista dei servizi inline per quel cliente e passiamo created info
+                            print('[DEBUG] apro mostra_servizi_cliente_dialog per cliente_id=', cliente_for_nav)
+                            mostra_servizi_cliente_dialog(
+                                cliente_for_nav,
+                                cliente_display,
+                                created_id=created_id,
+                                created_obj=created_obj,
+                            )
+                        except Exception as e:
+                            crea_msg.text = f'Errore: {e}'
+                            ui.notify(f'Errore creazione servizio: {e}', color='negative')
+                            print('[DEBUG] eccezione in submit_crea:', e)
 
-    # dati in memoria
-    clienti_originali = []   # tutti i clienti (se richiesti)
-    miei_clienti_ids = set() # ids dei clienti assegnati al dipendente
+                    with ui.row().classes('q-mt-md btn-aggiungi').style('align-items:center;width:100%;justify-content:center;'):
+                        ui.button('Crea', on_click=submit_crea).classes('custom-button-blue-light-panels')
+                        ui.button('Annulla', on_click=lambda: crea_servizio_dialog.close()).classes('custom-button-blue-light-panels')
+
+# ------------------------------
+            # BARRA DI RICERCA
+            # ------------------------------
+            with ui.row():
+                search = ui.input('', placeholder="Cerca per nome o cognome...").classes('search-bar q-mb-sm') \
+                    .props('dense borderless') \
+                    .style('margin-bottom:0;')
+
+            # ------------------------------
+            # SOLO I MIEI + AGGIORNA SOTTO
+            # ------------------------------
+            with ui.row().classes('items-center q-mb-md').style('gap:12px; justify-content:center;'):
+                only_mine = ui.checkbox('Personali', value=True).props('dense')
+                ui.button('Aggiorna', icon='refresh', on_click=lambda: carica_clienti()).props('flat')
+
+
+            # area risultati
+            clienti_list = ui.column().classes('full-width justify-center items-center').style('gap:18px;')
+
+            # dati in memoria
+            clienti_originali = []   # tutti i clienti (se richiesti)
+            miei_clienti_ids = set() # ids dei clienti assegnati al dipendente
 
     # -------------------------
     # Funzioni per la gestione dei servizi
@@ -228,6 +326,21 @@ def clienti_page_dipendente():
     # Dialog inline: mostra e gestisci servizi per un cliente
     # -------------------------
     def mostra_servizi_cliente_dialog(cliente_id: int, cliente_display: str, created_id=None, created_obj=None):
+        ui.add_head_html("""
+<style>
+.custom-scrollbar::-webkit-scrollbar {
+    width: 6px;  /* larghezza scrollbar */
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;  /* elimina il bordo bianco */
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: rgba(25,118,210,0.5);  /* colore della “barra” */
+    border-radius: 3px;
+    border: none;  /* rimuove eventuale bordo */
+}
+</style>
+""")
         print('[DEBUG] mostra_servizi_cliente_dialog aperto per cliente_id=', cliente_id)
         dialog = ui.dialog()
         servizi_originali = []
@@ -235,15 +348,14 @@ def clienti_page_dipendente():
         servizi_container = None
 
         with dialog:
-            with ui.card().classes('q-pa-xl').style('max-width:1000px;'):
-                ui.label(f'Servizi per {cliente_display} (id {cliente_id})').classes('text-h6 q-mb-md')
-                ricerca_servizi = ui.input('', placeholder="Cerca servizio (tipo / codice)...").props(
-                    'outlined dense'
-                ).style('max-width:420px;')
+            with ui.card().classes('q-pa-xl').style('max-width:1000px;width: 1000px;background: rgba(240,240,240) !important;box-shadow: 0 10px 32px 0 #1976d222, 0 2px 10px 0 #00000012 !important;border-radius: 2.5em !important;border: 1.7px solid #e3eaf1 !important;backdrop-filter: blur(6px);align-items: center;'):
+                ui.label(f'Servizi di {cliente_display} (id {cliente_id})').classes('text-h6 q-mb-md')
                 with ui.row().classes('q-mb-md'):
+                    ricerca_servizi = ui.input('', placeholder="Cerca servizio (tipo / codice)...").props(
+                        'outlined dense'
+                    ).style('max-width:450px;')
                     ui.button('Aggiorna', icon='refresh', on_click=lambda: carica_servizi_cliente()).props('flat')
-
-                servizi_container = ui.column().classes('full-width').style('gap:12px;')
+                servizi_container = ui.column().classes('full-width').style('gap:12px; align-items:flex-start; max-height:400px; overflow-y:auto;')
 
                 def carica_servizi_cliente():
                     nonlocal servizi_originali, servizi_display
@@ -330,31 +442,36 @@ def clienti_page_dipendente():
                             'stato_str=', stato_str
                         )
 
-                        with servizi_container:
-                            with ui.card().classes('q-pa-md q-mb-sm').style('background:#f8f9fa;'):
-                                ui.label(titolo).classes('text-h6 q-mb-sm')
+                        with servizi_container.style('align-items:center;'):
+                            with ui.card().classes('q-pa-md q-mb-sm').style(
+                                        'background:#e0f7fa; border-radius:1em; padding:0.5em 2em; width:92%;margin-top: 2em;'
+                                    ):
+                                ui.label(titolo).classes('text-subtitle1 text-dark text-weight-bold').style('text-align: left;')
                                 with ui.row().classes('items-center q-gutter-xs'):
                                     ui.icon(get_icon_for_stato(stato_str), size='24px').classes('q-mr-xs')
                                     ui.label(f"Stato: {stato_str}").classes('text-subtitle2 q-mb-xs')
 
                                 with ui.row().classes('q-gutter-md q-mt-sm'):
                                     ui.button(
-                                        'Documentazione',
-                                        icon='folder',
-                                        on_click=lambda s=servizio: ui.navigate.to(f'/servizi/{s.id}/documenti'),
-                                    ).classes('q-pa-sm')
-                                    ui.button(
                                         'Dettagli',
                                         icon='visibility',
+                                        color='primary',
                                         on_click=lambda s=servizio: ui.navigate.to(f'/servizi/{s.id}/dettagli'),
-                                    ).classes('q-pa-sm')
+                                    ).props('flat round type="button"')
+                                    ui.button(
+                                        'Documentazione',
+                                        icon='folder',
+                                        color='accent',
+                                        on_click=lambda s=servizio: ui.navigate.to(f'/servizi/{s.id}/documenti'),
+                                    ).props('flat round type="button"')
                                     ui.button(
                                         'Archivia',
                                         icon='archive',
+                                        color='secondary',
                                         on_click=lambda sid=servizio.id: archivia_servizio_ui(
                                             sid, carica_servizi_cliente
                                         ),
-                                    ).classes('q-pa-sm')
+                                    ).props('flat round type="button"')
 
                                     is_dipendente = dipendente_id is not None
                                     stato_servizio = stato_str
@@ -369,47 +486,39 @@ def clienti_page_dipendente():
                                             ui.button(
                                                 'Inizializza',
                                                 icon='play_arrow',
+                                                color='positive',
                                                 on_click=lambda sid=servizio.id: inizializza_servizio_ui(
                                                     sid, carica_servizi_cliente
                                                 ),
-                                            ).classes('q-pa-sm')
+                                            ).props('flat round type="button"')
 
                                         elif stato_servizio == 'IN_LAVORAZIONE':
                                             ui.button(
                                                 'Inoltra al notaio',
                                                 icon='send',
+                                                color='info',
                                                 on_click=lambda sid=servizio.id: inoltra_al_notaio_ui(
                                                     sid, carica_servizi_cliente
                                                 ),
-                                            ).classes('q-pa-sm')
+                                            ).props('flat round type="button"')
                                             ui.button(
                                                 'Modifica',
                                                 icon='edit',
+                                                color='brown',
                                                 on_click=lambda sid=servizio.id: ui.navigate.to(
                                                     f'/servizi/{sid}/modifica'
                                                 ),
-                                            ).classes('q-pa-sm')
+                                            ).props('flat round type="button"')
                                             ui.button(
                                                 'Elimina',
                                                 icon='delete',
+                                                color='negative',
                                                 on_click=lambda sid=servizio.id: elimina_servizio_ui(
                                                     sid, carica_servizi_cliente
                                                 ),
-                                            ).classes('q-pa-sm')
+                                            ).props('flat round type="button"')
 
-                                        elif stato_servizio in [
-                                            'IN_ATTESA_APPROVAZIONE',
-                                            'APPROVATO',
-                                            'RIFIUTATO',
-                                            'CONSEGNATO',
-                                        ]:
-                                            ui.button(
-                                                'Visualizza',
-                                                icon='visibility',
-                                                on_click=lambda s=servizio: ui.navigate.to(
-                                                    f'/servizi/{s.id}/dettagli'
-                                                ),
-                                            ).classes('q-pa-sm')
+                                        
 
                 def on_search_servizi(e=None):
                     q = (ricerca_servizi.value or '').strip().lower()
@@ -496,7 +605,7 @@ def clienti_page_dipendente():
 
         for cli in clienti_display:
             with clienti_list:
-                with ui.card().style('background:#e3f2fd;border-radius:1em;min-height:78px;padding:1em 2em;'):
+                with ui.card().classes('justify-center items-center cliente-card').style('background:#e3f2fd;border-radius:1em;min-height:78px;padding:1em 2em;'):
                     nome = cli.get('utente', {}).get('nome', '')
                     cognome = cli.get('utente', {}).get('cognome', '')
                     cliente_id = cli.get('id')
@@ -520,19 +629,19 @@ def clienti_page_dipendente():
                             icon='work',
                             color='primary',
                             on_click=lambda id=cliente_id, t=title: mostra_servizi_cliente_dialog(id, t),
-                        ).props('flat round')
+                        ).props('flat round').classes('uniform-btn')
                         ui.button(
                             'Documenti',
                             icon='folder',
                             color='accent',
                             on_click=lambda id=cliente_id: visualizza_documenti(id),
-                        ).props('flat round')
+                        ).props('flat round').classes('uniform-btn')
                         ui.button(
                             'Aggiungi',
                             icon='add',
                             color='positive',
                             on_click=lambda cid=cliente_id, n=title: open_crea_dialog_for_cliente(cid, n),
-                        ).props('flat round')
+                        ).props('flat round').classes('uniform-btn')
 
     def open_crea_dialog_for_cliente(cliente_id, cliente_display):
         selected_cliente['id'] = cliente_id

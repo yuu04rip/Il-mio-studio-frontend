@@ -246,7 +246,7 @@ def _render_doc_row(
     with container:
         with ui.card().style(
                 'background:#f4f7fb;border-radius:1.5em;min-height:72px;'
-                'padding:1em 1.4em;margin-bottom:8px;'
+                'padding:1em 1.4em;margin-bottom:8px;width:100%;'
         ):
             with ui.row().classes('items-center').style('width:100%;gap:12px;'):
                 ui.icon(tipo_icon).style('font-size:1.8em;color:#1976d2;margin-right:12px;')
@@ -328,7 +328,6 @@ def documentazione_cliente_page(cliente_id: int):
 }
 </style>
 """)
-    header(f'Documentazione cliente #{cliente_id}')
 
     with ui.card().classes('q-pa-xl q-mt-xl q-mx-auto shadow-5').style(
             'max-width:880px;background: rgba(240,240,240) !important; '
@@ -336,9 +335,7 @@ def documentazione_cliente_page(cliente_id: int):
             'border-radius: 2.5em !important; align-items:center;'
     ):
         ui.label(f'Documentazione personale – cliente #{cliente_id}').classes('text-h5 q-mb-xl').style(
-            'background: linear-gradient(90deg, #2196f3 70%, #1976d2 100%) !important;'
-            'color:white;border-radius:2em;padding:.6em 2.5em;display:block;text-align:center;'
-            'font-weight:600;letter-spacing:0.04em;'
+            'background: trasporant !importtant;color:#1976d2;border-radius:2em;padding:.6em 2.5em;display:block;text-align:center;font-weight:600;letter-spacing:0.04em;font-size:2rem;'
         )
 
         container = ui.column().classes('full-width').style('gap:20px;')
@@ -379,14 +376,20 @@ def documentazione_servizio_page(servizio_id: int):
     border: none !important;
 }
 .q-uploader__list {
-    display: none !important;
+    display: none !important; /* nasconde il riquadro bianco */
 }
-.custom-uploader .q-uploader__header {
-    border: none !important;
-    box-shadow: none !important;
+.custom-uploader .q-uploader__header-content {
+    display: flex !important;          /* esempio */
+    justify-content: center !important;
+    align-items: center !important;
+    background: linear-gradient(90deg, #1976d2 70%, #0d47a1 100%) !important;
+    color: white !important;
+    font-weight: 600 !important;
+    border-radius: 2.5em !important;
 }
-.custom-uploader {
-    background: linear-gradient(90deg, #2196f3 70%, #1976d2 100%) !important;
+
+.custom-uploader  .q-uploader__header{
+    background: trasparent !important;
     font-weight: 600 !important;
     border-radius: 2.5em !important;
     box-shadow: 0 10px 32px 0 #1976d222, 0 2px 10px 0 #00000012 !important;
@@ -403,21 +406,17 @@ def documentazione_servizio_page(servizio_id: int):
 }
 </style>
 """)
-    header(f'Documentazione servizio #{servizio_id}')
-
     with ui.card().classes('q-pa-xl q-mt-xl q-mx-auto shadow-5').style(
             'max-width:880px;background: rgba(240,240,240) !important; '
             'box-shadow: 0 10px 32px 0 #1976d222, 0 2px 10px 0 #00000012 !important; '
-            'border-radius: 2.5em !important; alignments:center;'
+            'border-radius: 2.5em !important; alignments:center;align-items:center;'
     ):
         ui.label(f'Documentazione servizio #{servizio_id}').classes('text-h5 q-mb-xl').style(
-            'background: linear-gradient(90deg, #2196f3 70%, #1976d2 100%) !important;'
-            'color:white;border-radius:2em;padding:.6em 2.5em;display:block;text-align:center;'
-            'font-weight:600;letter-spacing:0.04em;'
+            'background: trasporant !importtant;color:#1976d2;border-radius:2em;padding:.6em 2.5em;display:block;text-align:center;font-weight:600;letter-spacing:0.04em;font-size:2rem;'
         )
 
         # upload solo per documenti del servizio
-        with ui.row().classes('q-mb-lg').style('justify-content:center;'):
+        with ui.row().classes('q-mb-lg').style('justify-content:center;align-items:center;'):
             selected_tipo = ui.select(
                 options={d["value"]: d["label"] for d in TIPI_DOCUMENTO_SERVIZIO},
                 label='Tipo documento',
@@ -432,11 +431,10 @@ def documentazione_servizio_page(servizio_id: int):
                 )
 
             ui.upload(
-                label='Carica documento per il servizio',
+                label='Carica documento',
                 auto_upload=True,
                 on_upload=_on_upload,
-            ).props('accept=.pdf,.jpg,.jpeg,.png flat').classes('custom-uploader')
-
+            ).props('accept=.pdf,.jpg,.jpeg,.png flat class=custom-uploader')
         ui.separator().classes('q-my-lg')
 
         container = ui.column().classes('full-width').style('gap:20px;')

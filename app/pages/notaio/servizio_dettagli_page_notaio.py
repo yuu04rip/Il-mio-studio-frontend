@@ -18,6 +18,50 @@ def get_icon_for_stato(stato):
 
 
 def servizio_dettagli_page_notaio(id: str = None):
+    ui.add_head_html("""
+<style>
+.custom-label {
+    font-weight: 600;
+    font-size: 2rem; /* aumentato da 1.2rem a 2rem */
+    color: #1976d2;
+    letter-spacing: 0.5px;
+    margin: 0;
+    padding: 0;
+    background: none;
+    box-shadow: none;
+}
+.custom-button-blue-light {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    background: linear-gradient(90deg, #2196f3 70%, #1976d2 100%) !important;
+    color: white !important;
+    font-weight: 600 !important;
+    border-radius: 2.5em !important;
+    padding: 0.8em 1.2em !important;
+    font-size: 1.2rem !important;
+    width: 100% !important;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2) !important;
+    letter-spacing: 0.5px !important;
+    heigth:100 px;
+}
+.custom-button-blue-light-panels {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    background: linear-gradient(90deg, #2196f3 70%, #1976d2 100%) !important;
+    color: white !important;
+    font-weight: 600 !important;
+    border-radius: 2.5em !important;
+    padding: 0.8em 1.2em !important;
+    font-size: 1.2rem !important;
+    width: 100% !important;
+    max-width: 300px !important;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2) !important;
+    letter-spacing: 0.5px !important;
+}
+</style>
+    """)
     servizio_id = id
     if servizio_id is None:
         try:
@@ -35,13 +79,9 @@ def servizio_dettagli_page_notaio(id: str = None):
         ui.label("ID servizio non valido").classes('text-negative q-mt-xl')
         return
 
-    with ui.card().classes('q-pa-xl q-mt-xl q-mx-auto').style('max-width: 800px;'):
-        with ui.row().classes('items-center q-mb-lg'):
-            ui.button(
-                icon='arrow_back',
-                on_click=lambda: ui.run_javascript('history.back()')
-            ).classes('q-mr-md')
-            ui.label('DETTAGLI SERVIZIO').classes('text-h4 text-weight-bold')
+    with ui.card().classes('q-pa-xl q-mt-xl q-mx-auto').style('width: 550px;background: rgba(240,240,240) !important;box-shadow: 0 10px 32px 0 #1976d222, 0 2px 10px 0 #00000012 !important;border-radius: 2.5em !important;border: 1.7px solid #e3eaf1 !important;backdrop-filter: blur(6px);align-items:center'):
+        with ui.row().classes('items-center q-mb-lg').style('width:100%;gap:12px;justify-content: center;'):
+            ui.label('DETTAGLI SERVIZIO').classes('text-h4 text-weight-bold').style('color: #1976d2;align-items:center')
 
         try:
             servizio_resp = api_session.get(f'/studio/servizi/{servizio_id}')
@@ -59,7 +99,7 @@ def servizio_dettagli_page_notaio(id: str = None):
             return
 
         # --- INFORMAZIONI PRINCIPALI ---
-        with ui.card().classes('q-pa-md q-mb-md').style('background:#f5f5f5;'):
+        with ui.card().classes('q-pa-md q-mb-md').style('background:#f5f5f5;width:400px;'):
             ui.label('INFORMAZIONI PRINCIPALI').classes('text-h6 text-weight-bold q-mb-md')
             with ui.grid(columns=2).classes('w-full gap-4'):
                 with ui.column():
@@ -81,9 +121,6 @@ def servizio_dettagli_page_notaio(id: str = None):
                             'RIFIUTATO': 'text-red',
                             'CONSEGNATO': 'text-purple',
                         }.get(servizio.statoServizio, 'text-grey')
-                        ui.icon(get_icon_for_stato(servizio.statoServizio)).classes(
-                            f'{icon_color} q-mr-sm'
-                        )
                         ui.label(servizio.statoServizio).classes('text-body1')
 
                 with ui.column():
@@ -116,7 +153,7 @@ def servizio_dettagli_page_notaio(id: str = None):
                     ui.label(data_consegna_str).classes('text-body1')
 
         # --- INFORMAZIONI CLIENTE ---
-        with ui.card().classes('q-pa-md q-mb-md').style('background:#e8f5e8;'):
+        with ui.card().classes('q-pa-md q-mb-md').style('background:#e8f5e8;width:400px;'):
             ui.label('INFORMAZIONI CLIENTE').classes('text-h6 text-weight-bold q-mb-md')
             with ui.grid(columns=2).classes('w-full gap-4'):
                 with ui.column():
@@ -136,7 +173,7 @@ def servizio_dettagli_page_notaio(id: str = None):
                     ui.label(str(cliente.get('id', 'N/A'))).classes('text-body1')
 
         # --- DIPENDENTE RESPONSABILE + CREATORE ---
-        with ui.card().classes('q-pa-md q-mb-md').style('background:#e3f2fd;'):
+        with ui.card().classes('q-pa-md q-mb-md').style('background:#e3f2fd;width:400px;'):
             ui.label('DIPENDENTE RESPONSABILE').classes('text-h6 text-weight-bold q-mb-md')
 
             creato_da = servizio_json.get('creato_da')
