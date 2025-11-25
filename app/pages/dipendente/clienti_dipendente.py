@@ -26,8 +26,8 @@ def get_icon_for_stato(stato):
 
 def clienti_page_dipendente():
 
-        # ---- CSS personalizzato ----
-    ui.html('''
+    # ---- CSS personalizzato ----
+    ui.add_head_html('''
     <style>
 .clienti-title {
     color:#1976d2;
@@ -179,10 +179,10 @@ def clienti_page_dipendente():
                         try:
                             cliente_for_nav = int(selected_cliente['id'])
                             print('[DEBUG] chiamata api_session.crea_servizio con:',
-                                'cliente_id=', cliente_for_nav,
-                                'tipo=', tipo_input.value,
-                                'codice_corrente=', codice_val,
-                                'dipendente_id=', dipendente_id)
+                                  'cliente_id=', cliente_for_nav,
+                                  'tipo=', tipo_input.value,
+                                  'codice_corrente=', codice_val,
+                                  'dipendente_id=', dipendente_id)
 
                             # chiamata API: passiamo esplicitamente anche dipendente_id
                             res = api_session.crea_servizio(
@@ -256,7 +256,7 @@ def clienti_page_dipendente():
                         ui.button('Crea', on_click=submit_crea).classes('custom-button-blue-light-panels')
                         ui.button('Annulla', on_click=lambda: crea_servizio_dialog.close()).classes('custom-button-blue-light-panels')
 
-# ------------------------------
+            # ------------------------------
             # BARRA DI RICERCA
             # ------------------------------
             with ui.row():
@@ -347,6 +347,124 @@ def clienti_page_dipendente():
         servizi_display = []
         servizi_container = None
 
+        # Reinserisco qui la versione inline di edit (open_edit_servizio_dialog)
+        def open_edit_servizio_dialog(servizio: Servizio, refresh_callback=None):
+            """Apre un dialog inline per modificare il servizio e salvarlo via PATCH.
+            Dopo il salvataggio richiama refresh_callback() se fornito."""
+            dlg = ui.dialog()
+            with dlg:
+                with ui.card().classes('q-pa-md').style('max-width:480px'):
+                    ui.label(f"Modifica servizio #{getattr(servizio, 'id', '—')}").classes('text-h6 q-mb-md')
+                    # Prefill values
+                    tipo_val = None
+                    try:
+                        tipo_val = servizio.tipo.value if hasattr(servizio.tipo, 'value') else servizio.tipo
+                    except Exception:
+                        tipo_val = getattr(servizio, 'tipo', None)
+                    tipo_sel = ui.select(TIPI_SERVIZIO, label='Tipo').props('outlined dense')
+                    if tipo_val is not None:
+                        tipo_sel.value = tipo_val
+
+                    codice_val = getattr(servizio, 'codiceCorrente', None) or getattr(servizio, 'codiceServizio', '') or ''
+                    codice_inp = ui.input(label='Codice corrente (opz.)').props('outlined dense')
+                    codice_inp.value = codice_val
+
+                    # try to extract a primary dipendente id (if present)
+                    dip_val = None
+                    try:
+                        if hasattr(servizio, 'dipendenti') and servizio.dipendenti:
+                            first = servizio.dipendenti[0]
+                            dip_val = getattr(first, 'id', None)
+                        elif hasattr(servizio, 'dipendente_id'):
+                            dip_val = getattr(servizio, 'dipendente_id')
+                    except Exception:
+                        dip_val = None
+                    dip_inp = ui.input(label='Dipendente ID (opz.)').props('outlined dense')
+                    dip_inp.value = dip_val or ''
+
+                    status_lbl = ui.label().classes('text-caption text-grey-6 q-mt-sm')
+
+                    def do_save():
+                        payload = {}
+                        t = tipo_sel.value
+                        if t:
+                            payload['tipo'] = t
+                        # codice
+                        raw_cod = codice_inp.value
+                        codice_raw = ''
+                        if raw_cod is None:
+                            codice_raw = ''
+                        elif isinstance(raw_cod, str):
+                            codice_raw = raw_cod.strip()
+                        else:
+                            try:
+                                codice_raw = str(raw_cod).strip()
+                            except Exception:
+                                codice_raw = ''
+                        if codice_raw != '':
+                            try:
+                                payload['codiceCorrente'] = int(codice_raw)
+                            except Exception:
+                                payload['codiceCorrente'] = codice_raw
+                        # dipendente
+                        dipv = dip_inp.value
+                        if dipv is not None and dipv != '':
+                            if isinstance(dipv, (int, float)):
+                                try:
+                                    payload['dipendente_id'] = int(dipv)
+                                except Exception:
+                                    payload['dipendente_id'] = dipv
+                            else:
+                                ds = str(dipv).strip()
+                                if ds != '':
+                                    try:
+                                        payload['dipendente_id'] = int(ds)
+                                    except Exception:
+                                        payload['dipendente_id'] = ds
+
+                        if not payload:
+                            status_lbl.text = 'Nessuna modifica da salvare'
+                            return
+
+                        try:
+                            # usa PATCH verso lo stesso prefisso usato nel frontend (/studio/servizi/...)
+                            resp = api_session.patch(f'/studio/servizi/{getattr(servizio, "id")}', payload)
+                            status = getattr(resp, 'status_code', None)
+                            # gestione difensiva come nella "prima" versione: considera anche dict come successo
+                            if status is None and isinstance(resp, dict):
+                                ui.notify('Modifica salvata', color='positive')
+                                dlg.close()
+                                if callable(refresh_callback):
+                                    refresh_callback()
+                                return
+                            if status == 200:
+                                ui.notify('Modifica salvata', color='positive')
+                                dlg.close()
+                                if callable(refresh_callback):
+                                    refresh_callback()
+                            else:
+                                err = ''
+                                try:
+                                    err = resp.text if hasattr(resp, 'text') else str(resp)
+                                except Exception:
+                                    try:
+                                        err = resp.json()
+                                    except Exception:
+                                        err = str(resp)
+                                status_lbl.text = f'Errore: {err}'
+                                ui.notify(f'Errore salvataggio: {err}', color='negative')
+                                print('[DEBUG] PATCH non ok:', status, err)
+                        except Exception as e:
+                            status_lbl.text = f'Errore: {e}'
+                            ui.notify(f'Errore salvataggio: {e}', color='negative')
+                            print('[DEBUG] eccezione patch servizio:', e)
+
+                    with ui.row().classes('q-mt-md').style('gap:8px'):
+                        ui.button('Salva', on_click=do_save).classes('q-pa-md')
+                        ui.button('Annulla', on_click=dlg.close).classes('q-ml-md q-pa-md')
+
+            dlg.open()
+
         with dialog:
             with ui.card().classes('q-pa-xl').style('max-width:1000px;width: 1000px;background: rgba(240,240,240) !important;box-shadow: 0 10px 32px 0 #1976d222, 0 2px 10px 0 #00000012 !important;border-radius: 2.5em !important;border: 1.7px solid #e3eaf1 !important;backdrop-filter: blur(6px);align-items: center;'):
                 ui.label(f'Servizi di {cliente_display} (id {cliente_id})').classes('text-h6 q-mb-md')
@@ -364,8 +482,8 @@ def clienti_page_dipendente():
                     try:
                         print('[DEBUG] chiamata GET /studio/servizi?cliente_id=', cliente_id)
                         resp = api_session.get(f'/studio/servizi?cliente_id={cliente_id}')
-                        print('[DEBUG] status servizi cliente:', resp.status_code)
-                        if resp.status_code == 200:
+                        print('[DEBUG] status servizi cliente:', getattr(resp, 'status_code', None))
+                        if getattr(resp, 'status_code', None) == 200:
                             arr = resp.json()
                             print('[DEBUG] risposta servizi cliente:', arr)
                             print('[DEBUG] numero servizi totali per cliente:', len(arr))
@@ -377,7 +495,7 @@ def clienti_page_dipendente():
                             servizi_originali = [Servizio.from_dict(s) for s in filtered]
                         else:
                             servizi_originali = []
-                            print('[DEBUG] risposta non 200 servizi cliente:', resp.text)
+                            print('[DEBUG] risposta non 200 servizi cliente:', getattr(resp, 'text', str(resp)))
                     except Exception as e:
                         print(f"[DEBUG] Errore caricamento servizi cliente {cliente_id}: {e}")
                         servizi_originali = []
@@ -444,8 +562,8 @@ def clienti_page_dipendente():
 
                         with servizi_container.style('align-items:center;'):
                             with ui.card().classes('q-pa-md q-mb-sm').style(
-                                        'background:#e0f7fa; border-radius:1em; padding:0.5em 2em; width:92%;margin-top: 2em;'
-                                    ):
+                                    'background:#e0f7fa; border-radius:1em; padding:0.5em 2em; width:92%;margin-top: 2em;'
+                            ):
                                 ui.label(titolo).classes('text-subtitle1 text-dark text-weight-bold').style('text-align: left;')
                                 with ui.row().classes('items-center q-gutter-xs'):
                                     ui.icon(get_icon_for_stato(stato_str), size='24px').classes('q-mr-xs')
@@ -471,6 +589,13 @@ def clienti_page_dipendente():
                                         on_click=lambda sid=servizio.id: archivia_servizio_ui(
                                             sid, carica_servizi_cliente
                                         ),
+                                    ).props('flat round type="button"')
+
+                                    # MOSTRO Modifica per TUTTI i servizi (senza filtro di stato)
+                                    ui.button(
+                                        'Modifica',
+                                        icon='edit',
+                                        on_click=lambda s=servizio: open_edit_servizio_dialog(s, refresh_callback=carica_servizi_cliente),
                                     ).props('flat round type="button"')
 
                                     is_dipendente = dipendente_id is not None
@@ -502,14 +627,6 @@ def clienti_page_dipendente():
                                                 ),
                                             ).props('flat round type="button"')
                                             ui.button(
-                                                'Modifica',
-                                                icon='edit',
-                                                color='brown',
-                                                on_click=lambda sid=servizio.id: ui.navigate.to(
-                                                    f'/servizi/{sid}/modifica'
-                                                ),
-                                            ).props('flat round type="button"')
-                                            ui.button(
                                                 'Elimina',
                                                 icon='delete',
                                                 color='negative',
@@ -517,8 +634,6 @@ def clienti_page_dipendente():
                                                     sid, carica_servizi_cliente
                                                 ),
                                             ).props('flat round type="button"')
-
-                                        
 
                 def on_search_servizi(e=None):
                     q = (ricerca_servizi.value or '').strip().lower()
@@ -546,7 +661,7 @@ def clienti_page_dipendente():
         nonlocal clienti_originali, miei_clienti_ids
         try:
             resp_miei = api_session.get('/studio/clienti?onlyMine=true')
-            if resp_miei.status_code == 200:
+            if getattr(resp_miei, 'status_code', None) == 200:
                 miei = resp_miei.json()
                 miei_clienti_ids = {c.get('id') for c in miei if c}
             else:
@@ -559,7 +674,7 @@ def clienti_page_dipendente():
                 resp = api_session.get('/studio/clienti?onlyMine=true')
             else:
                 resp = api_session.get('/studio/clienti/')
-            clienti_originali = resp.json() if resp.status_code == 200 else []
+            clienti_originali = resp.json() if getattr(resp, 'status_code', None) == 200 else []
         except Exception as e:
             clienti_originali = []
             print(f"Errore caricamento clienti: {e}")

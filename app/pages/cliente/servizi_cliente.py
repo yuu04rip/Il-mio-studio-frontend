@@ -53,6 +53,62 @@ _COLOR_MAP = {
     'info': '#1976d2',      # blue
 }
 
+def _is_archived_or_deleted(item: dict) -> bool:
+    """Return True if the given dict represents an archived/deleted service.
+
+    This covers multiple possible field names and value types:
+    - boolean fields: archived, is_archived, is_deleted, deleted, archiviato, is_archiviato
+    - string fields: 'true','1','yes' or textual states like 'archiviato','archived'
+    """
+    if not isinstance(item, dict):
+        return False
+
+    # candidate values to consider
+    candidates = (
+        item.get('archived'),
+        item.get('archiviato'),
+        item.get('is_archived'),
+        item.get('is_archiviato'),
+        item.get('is_deleted'),
+        item.get('deleted'),
+        item.get('stato'),
+        item.get('statoServizio'),
+        item.get('status'),
+    )
+
+    for v in candidates:
+        if v is None:
+            continue
+        # if it's a boolean-like
+        if isinstance(v, bool):
+            if v:
+                return True
+            else:
+                continue
+        # if numeric-like (0/1)
+        if isinstance(v, (int, float)):
+            try:
+                if int(v) != 0:
+                    return True
+            except Exception:
+                pass
+            continue
+        # if string-like
+        try:
+            s = str(v).strip().lower()
+        except Exception:
+            continue
+        if s in ('1', 'true', 'yes', 't', 'y'):
+            return True
+        # check common textual markers
+        if s in ('archiviato', 'archiviata', 'archiviati', 'archivio', 'archived', 'deleted', 'cancellato', 'cancellata'):
+            return True
+        # sometimes stato fields may be full words like 'IN_ATTESA_APPROVAZIONE' etc.
+        if 'archiv' in s or 'delete' in s or 'cancell' in s:
+            return True
+
+    return False
+
 def servizi_cliente_approvati_page(cliente_id: int):
     ui.add_head_html("""
 <style>
@@ -140,6 +196,9 @@ def servizi_cliente_approvati_page(cliente_id: int):
             ui.notify(f"Errore nel caricamento: {e}", color="negative")
             ui.label("Impossibile caricare i servizi approvati").classes('text-negative q-mt-md')
             return
+
+        # filter out archived/deleted services (robust to different backend field names)
+        servizi = [s for s in (servizi or []) if not _is_archived_or_deleted(s)]
 
         if not servizi:
             ui.label("Nessun servizio approvato trovato.").classes('text-grey-7 q-mt-md')

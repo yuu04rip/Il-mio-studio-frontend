@@ -25,8 +25,8 @@ def get_icon_for_stato(stato):
 
 def clienti_page():
 
-        # ---- CSS personalizzato ----
-    ui.html('''
+    # ---- CSS personalizzato ----
+    ui.add_head_html('''
 <style>
 /* Titolo della pagina */
 .clienti-title {
@@ -135,20 +135,18 @@ def clienti_page():
     .client-card .q-btn { min-width: 100px; }
 }
 </style>
-
-
     ''')
+
     with ui.card().classes('main-card'):
         ui.label('CLIENTI').classes('text-h5 q-mt-xl q-mb-lg clienti-title').style(
-                'color:#1976d2;padding:.5em 2.5em;'
-                'text-align:center;font-weight:600;letter-spacing:0.04em;'
-            )
-
+            'color:#1976d2;padding:.5em 2.5em;'
+            'text-align:center;font-weight:600;letter-spacing:0.04em;'
+        )
 
         # barra di ricerca
         search = ui.input('', placeholder="Cerca per nome o cognome...").classes('search-bar q-mb-sm') \
-                    .props('dense borderless') \
-                    .style('margin-bottom:0;')
+            .props('dense borderless') \
+            .style('margin-bottom:0;')
 
         clienti_list = ui.column().classes('justify-center items-center full-width').style('gap:18px;')
 
@@ -196,23 +194,33 @@ def clienti_page():
                             dipendente_id=None,  # il notaio non è dipendente tecnico; puoi lasciare None
                         )
 
+                        # parsing difensivo della risposta create
                         created_obj = None
                         created_id = None
                         if isinstance(res, dict):
                             created_obj = res
                         elif hasattr(res, 'json'):
-                            created_obj = res.json()
+                            try:
+                                created_obj = res.json()
+                            except Exception:
+                                created_obj = None
                         if created_obj:
                             created_id = created_obj.get('id')
 
-                        # 2) imposta subito stato APPROVATO
+                        # 2) imposta subito stato APPROVATO (controllo difensivo)
                         if created_id is not None:
                             patch_resp = api_session.patch(
                                 f"/studio/servizi/{created_id}",
                                 {"statoServizio": "APPROVATO"},
                             )
-                            if patch_resp.status_code != 200:
-                                crea_msg.text = f"Servizio creato ma errore nel set stato APPROVATO: {patch_resp.text}"
+                            if getattr(patch_resp, 'status_code', None) != 200:
+                                text = getattr(patch_resp, 'text', None)
+                                try:
+                                    if text is None and hasattr(patch_resp, 'json'):
+                                        text = patch_resp.json()
+                                except Exception:
+                                    text = str(patch_resp)
+                                crea_msg.text = f"Servizio creato ma errore nel set stato APPROVATO: {text}"
                                 return
 
                         # estrai codice per notifica
@@ -259,6 +267,123 @@ def clienti_page():
             servizi_display_local = []
             servizi_container = None
 
+            def open_edit_servizio_dialog(servizio: Servizio, refresh_callback=None):
+                """Apre un dialog inline per modificare un singolo servizio e salvarlo via PATCH."""
+                dlg = ui.dialog()
+                with dlg:
+                    with ui.card().classes('q-pa-md').style('max-width:480px'):
+                        ui.label(f"Modifica servizio #{getattr(servizio, 'id', '—')}").classes('text-h6 q-mb-md')
+
+                        # prefill tipo
+                        tipo_val = None
+                        try:
+                            tipo_val = servizio.tipo.value if hasattr(servizio.tipo, 'value') else servizio.tipo
+                        except Exception:
+                            tipo_val = getattr(servizio, 'tipo', None)
+                        tipo_sel = ui.select(TIPI_SERVIZIO, label='Tipo').props('outlined dense')
+                        if tipo_val is not None:
+                            tipo_sel.value = tipo_val
+
+                        # prefill codice
+                        codice_val = getattr(servizio, 'codiceCorrente', None) or getattr(servizio, 'codiceServizio', '') or ''
+                        codice_inp = ui.input(label='Codice corrente (opz.)').props('outlined dense')
+                        codice_inp.value = codice_val
+
+                        # prefill dipendente id (se possibile)
+                        dip_val = None
+                        try:
+                            if hasattr(servizio, 'dipendenti') and servizio.dipendenti:
+                                first = servizio.dipendenti[0]
+                                dip_val = getattr(first, 'id', None)
+                            elif hasattr(servizio, 'dipendente_id'):
+                                dip_val = getattr(servizio, 'dipendente_id')
+                        except Exception:
+                            dip_val = None
+                        dip_inp = ui.input(label='Dipendente ID (opz.)').props('outlined dense')
+                        dip_inp.value = dip_val or ''
+
+                        status_lbl = ui.label().classes('text-caption text-grey-6 q-mt-sm')
+
+                        def do_save():
+                            payload = {}
+                            t = tipo_sel.value
+                            if t:
+                                payload['tipo'] = t
+
+                            # codice
+                            raw_cod = codice_inp.value
+                            codice_raw = ''
+                            if raw_cod is None:
+                                codice_raw = ''
+                            elif isinstance(raw_cod, str):
+                                codice_raw = raw_cod.strip()
+                            else:
+                                try:
+                                    codice_raw = str(raw_cod).strip()
+                                except Exception:
+                                    codice_raw = ''
+                            if codice_raw != '':
+                                try:
+                                    payload['codiceCorrente'] = int(codice_raw)
+                                except Exception:
+                                    payload['codiceCorrente'] = codice_raw
+
+                            # dipendente
+                            dipv = dip_inp.value
+                            if dipv is not None and dipv != '':
+                                if isinstance(dipv, (int, float)):
+                                    try:
+                                        payload['dipendente_id'] = int(dipv)
+                                    except Exception:
+                                        payload['dipendente_id'] = dipv
+                                else:
+                                    ds = str(dipv).strip()
+                                    if ds != '':
+                                        try:
+                                            payload['dipendente_id'] = int(ds)
+                                        except Exception:
+                                            payload['dipendente_id'] = ds
+
+                            if not payload:
+                                status_lbl.text = 'Nessuna modifica da salvare'
+                                return
+
+                            try:
+                                resp = api_session.patch(f'/studio/servizi/{getattr(servizio, "id")}', payload)
+                                status = getattr(resp, 'status_code', None)
+                                # gestione difensiva: considera anche dict come successo
+                                if status is None and isinstance(resp, dict):
+                                    ui.notify('Modifica salvata', color='positive')
+                                    dlg.close()
+                                    if callable(refresh_callback):
+                                        refresh_callback()
+                                    return
+                                if status == 200:
+                                    ui.notify('Modifica salvata', color='positive')
+                                    dlg.close()
+                                    if callable(refresh_callback):
+                                        refresh_callback()
+                                else:
+                                    err = ''
+                                    try:
+                                        err = resp.text if hasattr(resp, 'text') else str(resp)
+                                    except Exception:
+                                        try:
+                                            err = resp.json()
+                                        except Exception:
+                                            err = str(resp)
+                                    status_lbl.text = f'Errore: {err}'
+                                    ui.notify(f'Errore salvataggio: {err}', color='negative')
+                            except Exception as e:
+                                status_lbl.text = f'Errore: {e}'
+                                ui.notify(f'Errore salvataggio: {e}', color='negative')
+
+                        with ui.row().classes('q-mt-md').style('gap:8px'):
+                            ui.button('Salva', on_click=do_save).classes('q-pa-md')
+                            ui.button('Annulla', on_click=dlg.close).classes('q-ml-md q-pa-md')
+
+                dlg.open()
+
             with dialog:
                 with ui.card().classes('q-pa-xl').style('max-width:1000px;width: 1000px;background: rgba(240,240,240) !important;box-shadow: 0 10px 32px 0 #1976d222, 0 2px 10px 0 #00000012 !important;border-radius: 2.5em !important;border: 1.7px solid #e3eaf1 !important;backdrop-filter: blur(6px);align-items: center;'):
                     ui.label(f'Servizi di {cliente_display} (id {cliente_id})').classes('text-h6 q-mb-md').style('color:#1976d2;padding: 0.6em 2.8em;font-weight: 700;letter-spacing: 0.05em;display: block;text-align: center;width: fit-content;font-size: 24px;')
@@ -274,8 +399,11 @@ def clienti_page():
                         nonlocal servizi_originali, servizi_display_local
                         try:
                             resp = api_session.get(f'/studio/servizi?cliente_id={cliente_id}')
-                            if resp.status_code == 200:
-                                arr = resp.json()
+                            if getattr(resp, 'status_code', None) == 200:
+                                try:
+                                    arr = resp.json()
+                                except Exception:
+                                    arr = resp if isinstance(resp, list) else []
                                 filtered = [
                                     s for s in arr
                                     if not s.get('archived', False) and not s.get('is_deleted', False)
@@ -356,7 +484,7 @@ def clienti_page():
                                             ),
                                         ).props('flat round type="button"')
 
-                                        # Notaio: puoi permettere modifica/elimina anche qui se vuoi
+                                        # Notaio: elimina rimane disponibile
                                         ui.button(
                                             'Elimina',
                                             icon='delete',
@@ -364,6 +492,14 @@ def clienti_page():
                                             on_click=lambda sid=servizio.id: elimina_servizio_ui(
                                                 sid, carica_servizi_cliente
                                             ),
+                                        ).props('flat round type="button"')
+
+                                        # MOSTRO Modifica per TUTTI i servizi (apre dialog inline)
+                                        ui.button(
+                                            'Modifica',
+                                            icon='edit',
+                                            color='secondary',
+                                            on_click=lambda s=servizio: open_edit_servizio_dialog(s, refresh_callback=carica_servizi_cliente),
                                         ).props('flat round type="button"')
 
                     def on_search_servizi(e=None):
@@ -411,7 +547,13 @@ def clienti_page():
         nonlocal clienti_originali
         try:
             resp = api_session.get('/studio/clienti/')
-            clienti_originali = resp.json() if resp.status_code == 200 else []
+            if getattr(resp, 'status_code', None) == 200:
+                try:
+                    clienti_originali = resp.json()
+                except Exception:
+                    clienti_originali = resp if isinstance(resp, list) else []
+            else:
+                clienti_originali = []
         except Exception as e:
             clienti_originali = []
             print(f"Errore caricamento clienti: {e}")
@@ -492,7 +634,7 @@ def clienti_page():
         selected_cliente['display'] = cliente_display
         try:
             # cliente_label è chiuso nel dialog; lo abbiamo definito lì sopra
-            # usiamo nonlocal per la closure oppure catturiamo cliente_label
+            # se vuoi aggiornare cliente_label dall'esterno devi rimandare il valore o usare closure/nonlocal
             pass
         except Exception:
             pass
