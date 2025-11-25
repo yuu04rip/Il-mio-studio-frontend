@@ -160,15 +160,27 @@ def chatbox(cliente_id: int):
         chat_wrapper.style('display: block;' if chat_visible else 'display: none;')
         toggle_button.style('display: none;' if chat_visible else 'display: flex;')
 
-        # 🔹 Trova la card principale e cambia stato visivo
-        main_card = ui.query('.q-card')[0] if ui.query('.q-card') else None
-        if main_card:
+        # 🔹 Non usare ui.query (Query object non è iterabile/subscriptable).
+        #    Manipoliamo il DOM direttamente con JS per aggiungere/rimuovere classi
+        #    alla prima .q-card trovata (se presente).
+        try:
             if chat_visible:
-                main_card.remove_class('default')
-                main_card.add_class('chat-open')
+                ui.run_javascript("""
+                    (function(){
+                        const c = document.querySelector('.q-card');
+                        if(c){ c.classList.remove('default'); c.classList.add('chat-open'); }
+                    })();
+                """)
             else:
-                main_card.remove_class('chat-open')
-                main_card.add_class('default')
+                ui.run_javascript("""
+                    (function(){
+                        const c = document.querySelector('.q-card');
+                        if(c){ c.classList.remove('chat-open'); c.classList.add('default'); }
+                    })();
+                """)
+        except Exception:
+            # non critico, ignoriamo errori JS runtime qui
+            pass
 
     # 🔘 Pulsante flottante
     with ui.element('button').classes('chat-toggle').on('click', toggle_chat) as toggle_button:
@@ -207,7 +219,7 @@ def chatbox(cliente_id: int):
                             ui.notify('Connessione fallita.', color='negative')
                             return
 
-                        if resp.status_code == 200:
+                        if getattr(resp, 'status_code', None) == 200:
                             with chat_container:
                                 ui.label('Richiesta ricevuta, ti risponderemo via email!').classes('bubble-bot')
                             ui.notify('Richiesta inviata!', color='positive')
