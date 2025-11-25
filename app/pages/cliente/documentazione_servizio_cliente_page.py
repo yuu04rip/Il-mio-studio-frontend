@@ -18,8 +18,10 @@ _PREVIEW_FILES_SERVIZIO: Dict[str, dict] = {}
 
 def documentazione_servizio_page_cliente(servizio_id: int):
     """Visualizza la documentazione associata al servizio (solo quella del servizio)"""
-    with ui.card().classes('q-pa-xl q-mt-xl q-mx-auto').style('max-width: 800px;'):
-        ui.label('Documentazione del Servizio').classes('text-h5 q-mb-xl')
+    with ui.card().classes('q-pa-xl q-mt-xl q-mx-auto').style('background:#f0f0f0;border-radius:2.5em;max-width: 900px;display:flex;flex-direction:column;align-items:center;justify-content:center;'):
+        ui.label('Documentazione del Servizio').classes('text-h5 q-mb-xl').style(
+                'margin-top:5px;color:#1976d2;text-align:center;font-size:2.5em;font-weight:bold;margin-bottom:20px;margin-left:1em;margin-right:1em;'
+            )
         doc_list = ui.column().classes('full-width').style('gap:20px;')
 
         resp = api_session.get(f'/documentazione/servizi/{servizio_id}/documenti')
@@ -28,7 +30,7 @@ def documentazione_servizio_page_cliente(servizio_id: int):
             if docs:
                 for doc in docs:
                     with doc_list:
-                        with ui.card().style('background:#f4f7fb;border-radius:1.5em;min-height:72px;padding:1em 2em;margin-bottom:8px;'):
+                        with ui.card().style('background:#f4f7fb;border-radius:1.5em;min-height:72px;padding:1em 2em;margin-bottom:8px;min-width:500px;margin-left:1.5em;margin-right:1.5em;'):
                             ui.label(doc.get('filename', 'Documento')).classes('text-body1 text-blue-grey-8')
                             with ui.row().classes('items-center').style('gap:8px;'):
                                 ext = str(doc.get("filename", "")).split('.')[-1].lower()
@@ -37,14 +39,16 @@ def documentazione_servizio_page_cliente(servizio_id: int):
                                     ui.button(
                                         'Visualizza',
                                         icon='visibility',
+                                        color='info',
                                         on_click=lambda d=doc: _preview_documento_servizio(d)
-                                    ).classes('q-mt-sm q-mr-sm')
+                                    ).props('flat round type="button"')
                                 # Scarica sempre disponibile
                                 ui.button(
                                     'Scarica',
                                     icon='download',
+                                    color='primary',
                                     on_click=lambda d=doc: _download_documento_servizio(d)
-                                ).classes('q-mt-sm')
+                                ).props('flat round type="button"')
             else:
                 with doc_list:
                     ui.label('Nessun documento associato a questo servizio.').classes('text-grey-7 q-mt-md')

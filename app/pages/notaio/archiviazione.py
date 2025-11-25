@@ -9,12 +9,23 @@ TIPI_SERVIZIO = {
 
 
 def servizi_notaio_archiviati_page():
-    ui.label('Servizi archiviati (Notaio)').classes(
+  with ui.card().classes(
+    'q-mx-auto q-my-xl shadow-3'
+).style(
+    'width: 900px;'
+    'background: rgba(240,240,240) !important;'
+    'box-shadow: 0 10px 32px 0 #1976d222, 0 2px 10px 0 #00000012 !important;'
+    'border-radius: 2.5em !important;'
+    'border: 1.7px solid #e3eaf1 !important;'
+    'backdrop-filter: blur(6px);'
+    'align-items:center;'
+):
+   with ui.row().classes('items-center q-mb-md').style('align-items:center; gap:40px; justify-content:center;'):
+    ui.icon('archive', size='40px').classes('q-mr-md').style('color:#1976d2')
+    ui.label('SERVIZI ARCHIVIATI').classes(
         'text-h5 q-mt-xl q-mb-lg'
     ).style(
-        'background:#37474f;color:white;border-radius:2em;'
-        'padding:.5em 2.5em;display:block;text-align:center;'
-        'font-weight:600;letter-spacing:0.04em;'
+        'font-weight:600;font-size:2rem;color: #1976d2;letter-spacing: 0.5px;margin: 0;padding: 0;background: none;box-shadow: none;'
     )
 
     servizi_container = ui.column().classes('full-width').style('gap:18px;')
@@ -39,7 +50,6 @@ def servizi_notaio_archiviati_page():
         print('[DEBUG][notaio-archiviati] servizi archiviati (count):', len(archiviati))
 
         with servizi_container:
-            ui.label('Servizi archiviati').classes('text-h6 q-mb-sm')
             if not archiviati:
                 ui.label('Nessun servizio archiviato.').classes('text-grey-7 q-mb-md')
                 return
@@ -56,15 +66,15 @@ def servizi_notaio_archiviati_page():
                                   f'Cliente #{servizio.get("cliente_id")}'
 
                 with ui.card().style(
-                        'background:#f5fcf4;border-radius:1em;min-height:72px;padding:1em 2em;'
+                        'background:#f5fcf4;border-radius:1em;min-height:72px;padding:1em 2em;width:100%;'
                 ):
                     ui.label(
                         f"{tipo} - {codice} | Stato: {stato_label}"
-                    ).classes('text-body1 q-mb-xs')
+                    ).classes('text-h6 q-mb-sm')
                     ui.label(
                         f"Cliente: {cliente_display}"
                     ).classes('text-caption text-grey-7 q-mb-sm')
-                    with ui.row().style('gap:8px;'):
+                    with ui.row().style('gap:16px;'):
                         ui.button(
                             'Dettagli',
                             icon='visibility',
