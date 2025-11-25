@@ -1,7 +1,9 @@
 from nicegui import ui
 from app.api.api import api_session
 from app.models.servizio import Servizio
+from datetime import datetime
 from dateutil.relativedelta import relativedelta
+
 
 def get_icon_for_stato(stato):
     icons = {
@@ -100,28 +102,44 @@ def servizio_cliente_dettagli_page(cliente_id: int, servizio_id: int):
                     with ui.row().classes('items-center'):
                         ui.label(servizio.statoServizio).classes('text-body1')
 
-                    # Creatore del servizio (notaio/dipendente che l'ha creato), come negli archiviati
+                    # Creatore del servizio
+                    creato_da = servizio_json.get('creato_da')
+                    op_nome = op_cognome = ''
+                    if isinstance(creato_da, dict):
+                        op_nome = (creato_da.get('nome') or '').strip()
+                        op_cognome = (creato_da.get('cognome') or '').strip()
+                    operatore_display = (op_nome + ' ' + op_cognome).strip()
+
+                    if operatore_display:
+                        ui.label('Creato da:').classes('text-weight-bold q-mt-md')
+                        with ui.row().classes('items-center'):
+                            ui.icon('person', size='18px').classes('q-mr-xs')
+                            ui.label(operatore_display).classes('text-body1')
 
                 with ui.column():
                     ui.label('Codice Corrente:').classes('text-weight-bold')
                     ui.label(str(servizio.codiceCorrente)).classes('text-body1')
 
+                    # Data Richiesta
                     ui.label('Data Richiesta:').classes('text-weight-bold q-mt-md')
-                    ui.label(
-                        servizio.dataRichiesta.strftime('%d/%m/%Y %H:%M')
-                        if hasattr(servizio.dataRichiesta, 'strftime')
-                        else servizio.dataRichiesta
-                    ).classes('text-body1')
+                    try:
+                        data_richiesta_dt = datetime.fromisoformat(servizio.dataRichiesta) \
+                            if isinstance(servizio.dataRichiesta, str) else servizio.dataRichiesta
+                        data_richiesta_str = data_richiesta_dt.strftime('%d/%m/%Y %H:%M')
+                    except Exception:
+                        data_richiesta_str = servizio.dataRichiesta
+                    ui.label(data_richiesta_str).classes('text-body1')
 
+                    # Data Consegna +3 mesi
                     ui.label('Data Consegna:').classes('text-weight-bold q-mt-md')
-                    data_consegna_plus3 = (
-                        servizio.dataConsegna + relativedelta(months=+3)
-                        if hasattr(servizio.dataConsegna, 'strftime') else servizio.dataConsegna
-                    )
-                    ui.label(
-                        data_consegna_plus3.strftime('%d/%m/%Y %H:%M')
-                        if hasattr(data_consegna_plus3, 'strftime') else data_consegna_plus3
-                    ).classes('text-body1')
+                    try:
+                        data_consegna_dt = datetime.fromisoformat(servizio.dataConsegna) \
+                            if isinstance(servizio.dataConsegna, str) else servizio.dataConsegna
+                        data_consegna_plus3 = data_consegna_dt + relativedelta(months=+3)
+                        data_consegna_str = data_consegna_plus3.strftime('%d/%m/%Y %H:%M')
+                    except Exception:
+                        data_consegna_str = servizio.dataConsegna
+                    ui.label(data_consegna_str).classes('text-body1')
 
         # --- DATI CLIENTE ---
         with ui.card().classes('q-pa-md q-mb-md').style('background:#e8f5e8;width:400px;'):
@@ -140,7 +158,7 @@ def servizio_cliente_dettagli_page(cliente_id: int, servizio_id: int):
                     ui.label('ID Cliente:').classes('text-weight-bold q-mt-md')
                     ui.label(str(cliente.get('id', 'N/A'))).classes('text-body1')
 
-
+        # --- AZIONI ---
         with ui.row().classes('q-mt-lg justify-center'):
             ui.button(
                 'Visualizza Documentazione',
@@ -148,4 +166,8 @@ def servizio_cliente_dettagli_page(cliente_id: int, servizio_id: int):
                 on_click=lambda: ui.navigate.to(f'/documentaizone_servizio_cliente/{servizio_id}')
             ).classes('custom-button-blue-light')
 
-            # Fine card principale
+            ui.button(
+                'Torna alla Lista Servizi',
+                icon='list',
+                on_click=lambda: ui.navigate.to(f'/servizi_cliente/{cliente_id}')
+            ).classes('q-pa-md')

@@ -4,8 +4,6 @@ from datetime import datetime
 from typing import Optional
 from dateutil.relativedelta import relativedelta
 
-
-
 # cache servizio_id -> dipendente dict (min info)
 _DIP_CACHE: dict = {}
 
@@ -32,16 +30,18 @@ def _get_dip_responsabile(servizio_id: int):
     _DIP_CACHE[servizio_id] = None
     return None
 
-def _format_date(date_str: Optional[str]) -> str:
-    """Formatta ISO date/datetime in formato leggibile (DD/MM/YYYY HH:MM) e aggiunge 3 mesi"""
+def _format_date(date_str: Optional[str], add_months: int = 0) -> str:
+    """Formatta ISO date/datetime in formato leggibile (DD/MM/YYYY HH:MM)
+    Aggiunge mesi se richiesto."""
     if not date_str:
         return "-"
     try:
         dt = datetime.fromisoformat(date_str)
-        dt_plus3 = dt + relativedelta(months=+3)  # aggiunta 3 mesi
-        if dt_plus3.time().hour == 0 and dt_plus3.time().minute == 0 and dt_plus3.time().second == 0:
-            return dt_plus3.strftime("%d/%m/%Y")
-        return dt_plus3.strftime("%d/%m/%Y %H:%M")
+        if add_months:
+            dt += relativedelta(months=+add_months)
+        if dt.time().hour == 0 and dt.time().minute == 0 and dt.time().second == 0:
+            return dt.strftime("%d/%m/%Y")
+        return dt.strftime("%d/%m/%Y %H:%M")
     except Exception:
         return str(date_str)
 
@@ -98,7 +98,7 @@ def servizi_cliente_approvati_page(cliente_id: int):
         ui.navigate.to(f'/home_cliente?cliente_id={cid}')
 
 
-    # determina ruolo dell'utente (dipendente / notaio / cliente) per usare la giusta pagina dettagli
+    # determina ruolo dell'utente
     user = getattr(api_session, 'user', None)
     user_role = 'cliente'
     try:
@@ -150,8 +150,11 @@ def servizi_cliente_approvati_page(cliente_id: int):
             tipo = servizio.get('tipo') or '—'
             codice = servizio.get('codiceServizio') or servizio.get('codiceCorrente') or '—'
             stato = servizio.get('statoServizio') or '—'
+
+            # formattazione date
             data_richiesta = _format_date(servizio.get('dataRichiesta'))
-            data_consegna = _format_date(servizio.get('dataConsegna'))
+            # Data consegna +3 mesi
+            data_consegna = _format_date(servizio.get('dataConsegna'), add_months=3)
 
             # colore badge stato
             stato_lower = str(stato).lower()
@@ -165,7 +168,7 @@ def servizi_cliente_approvati_page(cliente_id: int):
                 stato_color = 'info'
             bg = _COLOR_MAP.get(stato_color, _COLOR_MAP['info'])
 
-            # creatore del servizio (come avevamo fatto per i servizi archiviati)
+            # creatore del servizio
             creato_da = servizio.get('creato_da')
             op_nome = op_cognome = ''
             if isinstance(creato_da, dict):
@@ -189,31 +192,27 @@ def servizi_cliente_approvati_page(cliente_id: int):
                         ui.label('Data richiesta').classes('text-caption text-grey-6')
                         ui.label(data_richiesta).classes('text-body2')
                     with ui.column().style('min-width:220px'):
-                        ui.label('Data consegna').classes('text-caption text-grey-6')
+                        ui.label('Data consegna (+3 mesi)').classes('text-caption text-grey-6')
                         ui.label(data_consegna).classes('text-body2')
                     with ui.column().style('flex:1'):
                         ui.label('Codice interno').classes('text-caption text-grey-6')
                         ui.label(servizio.get('codiceCorrente') or '-').classes('text-body2')
 
-                # creatore + dipendente responsabile + azioni
+                # creatore + azioni
                 with ui.row().classes('items-start').style('justify-content:space-between;margin-top:4px;'):
                     with ui.column():
-                        # creatore del servizio (notaio/dipendente che l'ha creato)
                         if operatore_display:
                             with ui.row().classes('items-center'):
                                 ui.icon('person', size='18px').classes('q-mr-xs')
                                 ui.label('Creato da').classes('text-caption text-grey-6 q-mr-xs')
                                 ui.label(operatore_display).classes('text-body2')
-                    # azioni (pulsanti)
-                    with ui.card().classes('q-pa-md q-mb-md').style(
-                        'width:400px; max-width:90%; '
-                        'background: transparent !important; '
-                        'border: none !important; '
-                        'box-shadow: none !important;'
-                    ):
-                        with ui.row().style('width:100%; justify-content: flex-end;'):
-                            ui.button(
-                                'Vedi dettagli',
-                                icon='info',
-                                on_click=lambda s_id=servizio_id: ui.navigate.to(details_url(s_id))
-                            ).classes('custom-button-blue-light ')
+                    # azioni
+                    with ui.row().classes('items-center'):
+                        ui.button(
+                            'Vedi dettagli',
+                            icon='info',
+                            on_click=lambda s_id=servizio_id: ui.navigate.to(details_url(s_id))
+                        ).classes('q-ml-sm').style(
+                            'background: linear-gradient(90deg,#1976d2,#1565c0); '
+                            'color:white; border-radius:12px;'
+                        )

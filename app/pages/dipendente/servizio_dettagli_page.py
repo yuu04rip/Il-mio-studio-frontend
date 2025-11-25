@@ -1,7 +1,9 @@
 from nicegui import ui
 from app.api.api import api_session
 from app.models.servizio import Servizio
-from dateutil.relativedelta import relativedelta 
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
+
 
 def get_icon_for_stato(stato):
     icons = {
@@ -136,22 +138,32 @@ def servizio_dettagli_page(id: str = None):
                     ui.label('Codice Corrente:').classes('text-weight-bold')
                     ui.label(str(servizio.codiceCorrente)).classes('text-body1')
 
+                    # Data Richiesta
                     ui.label('Data Richiesta:').classes('text-weight-bold q-mt-md')
-                    ui.label(
-                        servizio.dataRichiesta.strftime('%d/%m/%Y %H:%M')
-                        if hasattr(servizio.dataRichiesta, 'strftime')
-                        else servizio.dataRichiesta
-                    ).classes('text-body1')
+                    try:
+                        if isinstance(servizio.dataRichiesta, str):
+                            data_richiesta_dt = datetime.fromisoformat(servizio.dataRichiesta)
+                        else:
+                            data_richiesta_dt = servizio.dataRichiesta
+                        data_richiesta_str = data_richiesta_dt.strftime('%d/%m/%Y %H:%M')
+                    except Exception:
+                        data_richiesta_str = servizio.dataRichiesta
 
+                    ui.label(data_richiesta_str).classes('text-body1')
+
+                    # Data Consegna +3 mesi
                     ui.label('Data Consegna:').classes('text-weight-bold q-mt-md')
-                    data_consegna_plus3 = (
-                        servizio.dataConsegna + relativedelta(months=+3)
-                        if hasattr(servizio.dataConsegna, 'strftime') else servizio.dataConsegna
-                    )
-                    ui.label(
-                        data_consegna_plus3.strftime('%d/%m/%Y %H:%M')
-                        if hasattr(data_consegna_plus3, 'strftime') else data_consegna_plus3
-                    ).classes('text-body1')
+                    try:
+                        if isinstance(servizio.dataConsegna, str):
+                            data_consegna_dt = datetime.fromisoformat(servizio.dataConsegna)
+                        else:
+                            data_consegna_dt = servizio.dataConsegna
+                        data_consegna_plus3 = data_consegna_dt + relativedelta(months=+3)
+                        data_consegna_str = data_consegna_plus3.strftime('%d/%m/%Y %H:%M')
+                    except Exception:
+                        data_consegna_str = servizio.dataConsegna
+
+                    ui.label(data_consegna_str).classes('text-body1')
 
         # Info cliente
         with ui.card().classes('q-pa-md q-mb-md').style('background:#e8f5e8;width: 400px'):
@@ -173,30 +185,6 @@ def servizio_dettagli_page(id: str = None):
 
                     ui.label('ID Cliente:').classes('text-weight-bold q-mt-md')
                     ui.label(str(cliente.get('id', 'N/A'))).classes('text-body1')
-
-        # Dipendente responsabile
-        with ui.card().classes('q-pa-md q-mb-md').style('background:#e3f2fd;width: 400px'):
-            ui.label('DIPENDENTE RESPONSABILE').classes('text-h6 text-weight-bold q-mb-md')
-
-            try:
-                dipendenti_resp = api_session.get(f'/studio/servizi/{servizio_id}/dipendenti')
-                if dipendenti_resp.status_code == 200:
-                    dipendenti = dipendenti_resp.json()
-                    if dipendenti:
-                        dip_responsabile = dipendenti[0]
-                        with ui.row().classes('items-center q-pa-sm'):
-                            ui.icon('person').classes('q-mr-sm')
-                            ui.label(
-                                f"{dip_responsabile.get('nome', 'N/A')} "
-                                f"{dip_responsabile.get('cognome', 'N/A')} "
-                                f"(ID: {dip_responsabile.get('id', 'N/A')})"
-                            ).classes('text-body1')
-                    else:
-                        ui.label("Nessun dipendente assegnato").classes('text-grey-7 italic')
-                else:
-                    ui.label("Impossibile recuperare i dipendenti").classes('text-grey-7 italic')
-            except Exception:
-                ui.label("Errore nel caricamento dei dipendenti").classes('text-grey-7 italic')
 
         # Creatore del servizio
         with ui.card().classes('q-pa-md q-mb-md').style('background:#fff3e0;width: 400px'):
@@ -229,4 +217,4 @@ def servizio_dettagli_page(id: str = None):
                 'Visualizza Documentazione',
                 icon='folder',
                 on_click=lambda sid=servizio_id: ui.navigate.to(f'/documentaizone_servizio_cliente/{servizio_id}'),
-            ).classes('custom-button-blue-light ')
+            ).classes('q-pa-md')
