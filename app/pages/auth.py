@@ -3,8 +3,8 @@ from app.api.api import api_session
 
 
 def login_page():
-     ui.add_head_html('<link rel="stylesheet" href="/static/styles.css">')
-     with ui.column().classes('items-center justify-center w-full').style('display:flex;height:100vh;'):
+    ui.add_head_html('<link rel="stylesheet" href="/static/styles.css">')
+    with ui.column().classes('items-center justify-center w-full').style('display:flex;height:100vh;'):
         with ui.card().classes('auth-modern-card shadow-8').style('max-width:420px;min-width:320px;padding:0;overflow:hidden;align-items:center;'):
             with ui.column().classes('items-center').style('padding:0;'):
                 ui.icon('login').style('font-size:3.0em;color:#1976d2;margin-top:30px;')
@@ -50,11 +50,11 @@ def login_page():
                         except Exception:
                             msg.text = "Errore di connessione al server."
                             return
-                        if resp.status_code == 200:
+                        if getattr(resp, 'status_code', None) == 200:
                             token = resp.json()['access_token']
                             api_session.set_token(token)
                             user_resp = api_session.get('/users/me')
-                            if user_resp.status_code == 200:
+                            if getattr(user_resp, 'status_code', None) == 200:
                                 api_session.set_user(user_resp.json())
                                 ruolo_utente = api_session.user.get('ruolo', '').upper()
                                 cliente_id = api_session.user.get('id', None)
@@ -68,7 +68,7 @@ def login_page():
                                     msg.text = "Ruolo utente non riconosciuto."
                             else:
                                 msg.text = "Errore nel recupero dati utente."
-                        elif resp.status_code == 403:
+                        elif getattr(resp, 'status_code', None) == 403:
                             msg.text = "Hai messo il ruolo errato."
                         else:
                             try:
@@ -78,13 +78,15 @@ def login_page():
 
                     ui.button('Accedi', on_click=do_login).classes('auth-modern-btn q-mt-lg')
                     ui.button('Registrati', on_click=lambda: ui.navigate.to('/register')).props('flat').classes('auth-modern-link')
+                    # ora "Password dimenticata?" apre la pagina di recupero che chiede solo email (+ opz. codice notarile)
                     ui.button('Password dimenticata?', on_click=lambda: ui.navigate.to('/change_password')).props('flat color=primary').classes('auth-modern-link')
                 ui.separator().style("width:100%;margin-top:28px;")
                 ui.label("© 2025 Il Mio Studio").style("color:#b0b7c3;margin:23px 0 10px 0;font-size:.98em;")
 
+
 def register_page():
-     ui.add_head_html('<link rel="stylesheet" href="/static/styles.css">')
-     with ui.column().classes('items-center justify-center w-full').style('display:flex;height:100vh;'):
+    ui.add_head_html('<link rel="stylesheet" href="/static/styles.css">')
+    with ui.column().classes('items-center justify-center w-full').style('display:flex;height:100vh;'):
         with ui.card().classes('auth-modern-card shadow-8').style('max-width:410px;min-width:320px;padding:0;overflow:hidden;align-items:center;'):
             with ui.column().classes('items-center').style('padding:0;'):
                 ui.icon('person_add').style('font-size:3.0em;color:#1976d2;margin-top:38px;')
@@ -111,22 +113,22 @@ def register_page():
                             msg.text = "Compila tutti i campi obbligatori."
                             return
                         try:
-                            resp = api_session.post('/auth/register', data)
+                            resp = api_session.post('/auth/register', json=data)
                         except Exception:
                             msg.text = "Errore di connessione al server"
                             return
-                        if resp.status_code == 200:
+                        if getattr(resp, 'status_code', None) == 200:
                             login_data = {
                                 'email': email.value,
                                 'password': password.value,
                             }
                             try:
-                                login_resp = api_session.post('/auth/login', login_data)
-                                if login_resp.status_code == 200:
+                                login_resp = api_session.post('/auth/login', json=login_data)
+                                if getattr(login_resp, 'status_code', None) == 200:
                                     token = login_resp.json()['access_token']
                                     api_session.set_token(token)
                                     user_resp = api_session.get('/users/me')
-                                    if user_resp.status_code == 200:
+                                    if getattr(user_resp, 'status_code', None) == 200:
                                         api_session.set_user(user_resp.json())
                                         ui.navigate.to('/home_cliente')
                                         return
@@ -145,45 +147,61 @@ def register_page():
 
 
 def change_password_page():
+    """
+    Page for 'forgot password' flow:
+    - asks only for email and (optionally) codice notarile
+    - posts to backend endpoint /auth/forgot-password which should send the password (or temp password) via email
+    """
     ui.add_head_html('<link rel="stylesheet" href="/static/styles.css">')
     with ui.column().classes('items-center justify-center w-full').style('display:flex;height:100vh;'):
         with ui.card().classes('auth-modern-card shadow-8').style('max-width:410px;min-width:320px;padding:0;overflow:hidden;align-items:center;'):
             with ui.column().classes('items-center').style('padding:0;'):
                 ui.icon('vpn_key').style('font-size:3.0em;color:#1976d2;margin-top:38px;')
-                ui.label('Recupero/Cambio password').classes('auth-modern-title').style('margin-top:8px;margin-bottom:15px;font-size:1.55em;font-weight:700;letter-spacing:0.04em;')
-                ui.separator().style("width:100%;margin-bottom:20px;")
+                ui.label('Recupero password').classes('auth-modern-title').style('margin-top:8px;margin-bottom:15px;font-size:1.55em;font-weight:700;letter-spacing:0.04em;')
+                ui.separator().style('width:100%;margin-bottom:20px;')
                 with ui.column().classes('justify-center items-center').style('width:82%;gap:18px;'):
                     email = ui.input('Email').props('outlined dense type=email').classes('auth-modern-input')
-                    old_pwd = ui.input('Password attuale', password=True).props('outlined dense').classes('auth-modern-input')
-                    new_pwd = ui.input('Nuova password', password=True).props('outlined dense').classes('auth-modern-input')
-                    codice_notarile = ui.input('Codice notarile (solo per notai)').props('outlined dense type=number min=0').classes('auth-modern-input')
+                    codice_notarile = ui.input('Codice notarile (solo per notai, opzionale)').props('outlined dense type=number min=0').classes('auth-modern-input')
                     msg = ui.label().classes('q-mt-sm text-negative').style('min-height:1.3em;')
-                    def do_change():
+
+                    def do_forgot():
                         msg.text = ""
-                        data = {
+                        if not email.value:
+                            msg.text = "Inserisci l'email."
+                            return
+                        payload = {
                             'email': email.value,
-                            'old_password': old_pwd.value,
-                            'new_password': new_pwd.value,
+                            # backend might expect codice_notarile key name 'codice_notarile' or similar; adjust if needed
                             'codice_notarile': int(codice_notarile.value) if codice_notarile.value else None,
                         }
-                        if not data['email'] or not data['old_password'] or not data['new_password']:
-                            msg.text = "Compila tutti i campi richiesti."
-                            return
                         try:
-                            resp = api_session.post('/auth/change-password', data)
-                            if resp.status_code == 200:
-                                msg.text = "Password cambiata!"
-                                msg.classes('text-positive')
-                            else:
-                                try:
-                                    msg.text = resp.json().get("detail", "Errore aggiornamento password")
-                                except Exception:
-                                    msg.text = "Errore aggiornamento password"
+                            # call the backend endpoint that sends the password to the user's email
+                            resp = api_session.post('/auth/forgot-password', json=payload)
                         except Exception:
-                            msg.text = "Errore di connessione al server"
-                    ui.button('Cambia password', on_click=do_change).classes('auth-modern-btn q-mt-lg')
+                            msg.text = "Errore di connessione al server."
+                            return
+
+                        status = getattr(resp, 'status_code', None)
+                        if status is None and isinstance(resp, dict):
+                            # some api_session wrappers return parsed dict on success
+                            ui.notify("Se l'email è registrata, riceverai la password via email.", color='positive')
+                            ui.run_javascript("window.setTimeout(() => history.back(), 800);")
+                            return
+
+                        if status == 200:
+                            ui.notify("Se l'email è registrata, riceverai la password via email.", color='positive')
+                            ui.run_javascript("window.setTimeout(() => history.back(), 800);")
+                        else:
+                            try:
+                                detail = resp.json().get('detail', None)
+                            except Exception:
+                                detail = None
+                            if detail:
+                                msg.text = detail
+                            else:
+                                msg.text = "Errore nella richiesta di recupero password."
+
+                    ui.button('Invia email con password', on_click=do_forgot).classes('auth-modern-btn q-mt-lg')
                     ui.button('Torna al login', on_click=lambda: ui.navigate.to('/')).props('flat').classes('auth-modern-link')
-                ui.separator().style("width:100%;margin-top:28px;")
+                ui.separator().style('width:100%;margin-top:28px;')
                 ui.label("© 2025 Il Mio Studio").style("color:#b0b7c3;margin:23px 0 10px 0;font-size:.98em;")
-
-
