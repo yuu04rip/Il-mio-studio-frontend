@@ -128,6 +128,7 @@ def clienti_page():
     padding: 0.2em 1.2em !important;
 }
 
+
 /* Responsività */
 @media (max-width: 720px) {
     .q-card.main-card { width: 92%; padding: 20px; }
@@ -271,8 +272,8 @@ def clienti_page():
                 """Apre un dialog inline per modificare un singolo servizio e salvarlo via PATCH."""
                 dlg = ui.dialog()
                 with dlg:
-                    with ui.card().classes('q-pa-md').style('max-width:480px'):
-                        ui.label(f"Modifica servizio #{getattr(servizio, 'id', '—')}").classes('text-h6 q-mb-md')
+                    with ui.card().classes('q-pa-md').style('max-width:400px;width:100%; align-items:center;border-radius:12px;background-color: #FFF8E7; padding: 0.5rem !important;'):
+                        ui.label(f"Modifica servizio #{getattr(servizio, 'id', '—')}").classes('text-h6 q-mb-md').style('color:#1976d2;padding: 0.6em 2.8em;font-weight: 700;letter-spacing: 0.05em;display: block;align-items:center;')
 
                         # prefill tipo
                         tipo_val = None
@@ -286,7 +287,7 @@ def clienti_page():
 
                         # prefill codice
                         codice_val = getattr(servizio, 'codiceCorrente', None) or getattr(servizio, 'codiceServizio', '') or ''
-                        codice_inp = ui.input(label='Codice corrente (opz.)').props('outlined dense')
+                        codice_inp = ui.input(label='Codice corrente (opz.)').props('outlined dense').style('width:80%')
                         codice_inp.value = codice_val
 
                         # prefill dipendente id (se possibile)
@@ -299,7 +300,7 @@ def clienti_page():
                                 dip_val = getattr(servizio, 'dipendente_id')
                         except Exception:
                             dip_val = None
-                        dip_inp = ui.input(label='Dipendente ID (opz.)').props('outlined dense')
+                        dip_inp = ui.input(label='Dipendente ID (opz.)').props('outlined dense').style('width:80%')
                         dip_inp.value = dip_val or ''
 
                         status_lbl = ui.label().classes('text-caption text-grey-6 q-mt-sm')
@@ -378,9 +379,9 @@ def clienti_page():
                                 status_lbl.text = f'Errore: {e}'
                                 ui.notify(f'Errore salvataggio: {e}', color='negative')
 
-                        with ui.row().classes('q-mt-md').style('gap:8px'):
-                            ui.button('Salva', on_click=do_save).classes('q-pa-md')
-                            ui.button('Annulla', on_click=dlg.close).classes('q-ml-md q-pa-md')
+                        with ui.row().classes('q-mt-md').style('align-items:center;width:100%;justify-content:center;'):
+                            ui.button('Salva', on_click=do_save).classes('custom-button-blue-light-panels')
+                            ui.button('Annulla', on_click=dlg.close).classes('custom-button-blue-light-panels')
 
                 dlg.open()
 

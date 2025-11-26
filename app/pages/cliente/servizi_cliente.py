@@ -115,18 +115,16 @@ def servizi_cliente_approvati_page(cliente_id: int):
 
 .custom-button-blue-light {
     display: flex !important;
-    justify-content: center !important;
-    align-items: center !important;
     background: linear-gradient(90deg, #2196f3 70%, #1976d2 100%) !important;
     color: white !important;
     font-weight: 600 !important;
     border-radius: 2.5em !important;
-    padding: 0.8em 1.2em !important;
+    padding: 0.2em 1.2em !important;
     font-size: 1.2rem !important;
-    width: 300px;
+    width: 250px;
     box-shadow: 0 4px 8px rgba(0,0,0,0.2) !important;
     letter-spacing: 0.5px !important;
-    heigth:20 px;
+    height:20px;
 }
 </style>
     """)
@@ -266,12 +264,9 @@ def servizi_cliente_approvati_page(cliente_id: int):
                                 ui.label('Creato da').classes('text-caption text-grey-6 q-mr-xs')
                                 ui.label(operatore_display).classes('text-body2')
                     # azioni
-                    with ui.row().classes('items-center'):
+                    with ui.row().classes('items-center justify-end'):
                         ui.button(
                             'Vedi dettagli',
                             icon='info',
                             on_click=lambda s_id=servizio_id: ui.navigate.to(details_url(s_id))
-                        ).classes('q-ml-sm').style(
-                            'background: linear-gradient(90deg,#1976d2,#1565c0); '
-                            'color:white; border-radius:12px;'
-                        )
+                        ).classes('custom-button-blue-light')

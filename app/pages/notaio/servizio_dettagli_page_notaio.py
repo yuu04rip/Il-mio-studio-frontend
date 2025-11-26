@@ -210,4 +210,4 @@ def servizio_dettagli_page_notaio(id: str = None):
                 'Visualizza Documentazione',
                 icon='folder',
                 on_click=lambda sid=servizio_id: ui.navigate.to(f'/documentaizone_servizio_cliente/{servizio_id}')
-            ).classes('q-pa-md')
+            ).classes('custom-button-blue-light')
