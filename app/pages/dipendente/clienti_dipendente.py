@@ -339,6 +339,29 @@ def clienti_page_dipendente():
     border-radius: 3px;
     border: none;  /* rimuove eventuale bordo */
 }
+.custom-button-blue-light-panels {
+    display: flex !important;
+    background: linear-gradient(90deg, #2196f3 70%, #1976d2 100%) !important;
+    color: white !important;
+    font-weight: 600 !important;
+    border-radius: 2.5em !important;
+    padding: 0.2em 1.2em !important;
+    font-size: 1.2rem !important;
+    width: 150px !important;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2) !important;
+    letter-spacing: 0.5px !important;
+    padding: 0.2em 1.2em !important;
+}
+.text-h6 {
+    color:#1976d2;
+    padding: 0.6em 2.8em;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    display: block;
+    text-align: center;
+    width: fit-content;
+    font-size: 24px;
+            }
 </style>
 """)
         print('[DEBUG] mostra_servizi_cliente_dialog aperto per cliente_id=', cliente_id)
@@ -353,7 +376,7 @@ def clienti_page_dipendente():
             Dopo il salvataggio richiama refresh_callback() se fornito."""
             dlg = ui.dialog()
             with dlg:
-                with ui.card().classes('q-pa-md').style('max-width:480px'):
+                with ui.card().classes('q-pa-md').style('max-width:400px;width:100%; align-items:center;border-radius:12px;background-color: #FFF8E7; padding: 0.5rem !important;'):
                     ui.label(f"Modifica servizio #{getattr(servizio, 'id', '—')}").classes('text-h6 q-mb-md')
                     # Prefill values
                     tipo_val = None
@@ -366,7 +389,7 @@ def clienti_page_dipendente():
                         tipo_sel.value = tipo_val
 
                     codice_val = getattr(servizio, 'codiceCorrente', None) or getattr(servizio, 'codiceServizio', '') or ''
-                    codice_inp = ui.input(label='Codice corrente (opz.)').props('outlined dense')
+                    codice_inp = ui.input(label='Codice corrente (opz.)').props('outlined dense').style('width:80%')
                     codice_inp.value = codice_val
 
                     # try to extract a primary dipendente id (if present)
@@ -379,7 +402,7 @@ def clienti_page_dipendente():
                             dip_val = getattr(servizio, 'dipendente_id')
                     except Exception:
                         dip_val = None
-                    dip_inp = ui.input(label='Dipendente ID (opz.)').props('outlined dense')
+                    dip_inp = ui.input(label='Dipendente ID (opz.)').props('outlined dense').style('width:80%')
                     dip_inp.value = dip_val or ''
 
                     status_lbl = ui.label().classes('text-caption text-grey-6 q-mt-sm')
@@ -459,9 +482,9 @@ def clienti_page_dipendente():
                             ui.notify(f'Errore salvataggio: {e}', color='negative')
                             print('[DEBUG] eccezione patch servizio:', e)
 
-                    with ui.row().classes('q-mt-md').style('gap:8px'):
-                        ui.button('Salva', on_click=do_save).classes('q-pa-md')
-                        ui.button('Annulla', on_click=dlg.close).classes('q-ml-md q-pa-md')
+                    with ui.row().classes('q-mt-md').style('align-items:center;width:100%;justify-content:center;'):
+                        ui.button('Salva', on_click=do_save).classes('custom-button-blue-light-panels')
+                        ui.button('Annulla', on_click=dlg.close).classes('custom-button-blue-light-panels')
 
             dlg.open()
 

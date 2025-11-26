@@ -44,12 +44,3 @@ def cambia_email_page():
         ui.button("Aggiorna", on_click=do_change).classes("q-mt-md glass-btn").style('background: linear-gradient(90deg, #2196f3 70%, #1976d2 100%) !important;color:#fff !important;position:relative;display:flex;align-items:center;justify-content:center;'
                     'max-width:330px;min-width:280px;'
                     'margin-top:12px;border-radius:12px;border-radius:1.8em;')
-
-# --- SUGGERIMENTI MODIFICHE ---
-# - Per cambiare la grafica: agisci su classi, style inline, o CSS globale (vedi ui.add_head_html e file account.py)
-# - Per cambiare comportamento: modifica la funzione do_change, aggiungi validazione, spinner, dialog, ecc.
-# - Per aggiungere campi: inserisci nuovi ui.input o ui.select dove vuoi (vedi doc NiceGUI)
-# - Le funzioni NiceGUI principali: ui.input, ui.button, ui.label, ui.card, ui.column, ui.row, ui.notify, ui.dialog, ui.add_head_html (per CSS), ui.add_body_html (HTML custom)
-# - Per vedere esempi e playground, visita https://nicegui.io/documentation
-
-# - Ricordate di commentare ogni blocco e ogni funzione per facilitare la collaborazione!
