@@ -2,6 +2,39 @@ from nicegui import ui
 from app.api.api import api_session
 
 
+def _resolve_cliente_id_for_user(user: dict):
+    """
+    Try to resolve cliente.id for the given user dict.
+    - If already cached in api_session.user['cliente_id'], return it.
+    - Otherwise call backend endpoint /studio/clienti/by_user/{utente_id} (if available).
+    - If not found, return None.
+    """
+    if not user:
+        return None
+    # prefer cached value
+    cid = user.get('cliente_id') or getattr(api_session, 'user', {}).get('cliente_id')
+    if cid:
+        return cid
+    uid = user.get('id')
+    if not uid:
+        return None
+    try:
+        resp = api_session.get(f'/studio/clienti/by_user/{uid}')
+        if getattr(resp, 'status_code', None) == 200:
+            body = resp.json()
+            if isinstance(body, dict):
+                cid = body.get('id')
+                # cache for future use
+                try:
+                    api_session.user['cliente_id'] = cid
+                except Exception:
+                    pass
+                return cid
+    except Exception:
+        pass
+    return None
+
+
 def login_page():
     ui.add_head_html('<link rel="stylesheet" href="/static/styles.css">')
     with ui.column().classes('items-center justify-center w-full').style('display:flex;height:100vh;'):
@@ -51,15 +84,22 @@ def login_page():
                             msg.text = "Errore di connessione al server."
                             return
                         if getattr(resp, 'status_code', None) == 200:
-                            token = resp.json()['access_token']
-                            api_session.set_token(token)
+                            token = resp.json().get('access_token')
+                            if token:
+                                api_session.set_token(token)
+                            # get current user
                             user_resp = api_session.get('/users/me')
                             if getattr(user_resp, 'status_code', None) == 200:
                                 api_session.set_user(user_resp.json())
                                 ruolo_utente = api_session.user.get('ruolo', '').upper()
-                                cliente_id = api_session.user.get('id', None)
+                                # IMPORTANT: resolve cliente_id from mapping utente -> cliente
+                                cliente_id = _resolve_cliente_id_for_user(api_session.user)
+                                # navigate using the resolved cliente_id when present
                                 if ruolo_utente == 'CLIENTE' and cliente_id:
                                     ui.navigate.to(f'/home_cliente?cliente_id={cliente_id}')
+                                elif ruolo_utente == 'CLIENTE':
+                                    # fallback if no cliente_id resolved
+                                    ui.navigate.to('/home_cliente')
                                 elif ruolo_utente == 'DIPENDENTE':
                                     ui.navigate.to('/home_dipendente')
                                 elif ruolo_utente == 'NOTAIO':
@@ -125,12 +165,18 @@ def register_page():
                             try:
                                 login_resp = api_session.post('/auth/login', json=login_data)
                                 if getattr(login_resp, 'status_code', None) == 200:
-                                    token = login_resp.json()['access_token']
-                                    api_session.set_token(token)
+                                    token = login_resp.json().get('access_token')
+                                    if token:
+                                        api_session.set_token(token)
                                     user_resp = api_session.get('/users/me')
                                     if getattr(user_resp, 'status_code', None) == 200:
                                         api_session.set_user(user_resp.json())
-                                        ui.navigate.to('/home_cliente')
+                                        # try to resolve cliente_id and navigate accordingly
+                                        cliente_id = _resolve_cliente_id_for_user(api_session.user)
+                                        if cliente_id:
+                                            ui.navigate.to(f'/home_cliente?cliente_id={cliente_id}')
+                                        else:
+                                            ui.navigate.to('/home_cliente')
                                         return
                                 msg.text = "Registrazione riuscita, ma errore nel login automatico."
                             except Exception:

@@ -93,7 +93,7 @@ def documentazione_page():
         def refresh_docs():
             doc_list.clear()
             res = api_session.get(f'/documentazione/documenti/visualizza/{cliente_id}')
-            if res.status_code == 200:
+            if getattr(res, 'status_code', None) == 200:
                 docs = res.json()
                 docs = [doc for doc in docs if not doc.get("is_deleted", False)]
                 docs = [doc for doc in docs if doc.get("tipo") in [d["value"] for d in TIPI_DOCUMENTO]]
@@ -132,6 +132,11 @@ def documentazione_page():
                                             '', icon='upload', color='purple',
                                             on_click=lambda d=doc, c=upload_container: sostituisci_documento(d['id'], refresh_docs,c)
                                         ).props('round flat size=lg').classes('q-ml-sm action-btn')
+                                        # Nuovo: elimina documento (con conferma)
+                                        ui.button(
+                                            '', icon='delete', color='negative',
+                                            on_click=lambda d=doc: _confirm_delete_documento(d, refresh_docs)
+                                        ).props('round flat size=lg').classes('q-ml-sm action-btn')
                 else:
                     with doc_list:
                         ui.label('Nessun documento caricato.').classes('text-grey-7 q-mt-md').style('text-align:center;font-size:1.12em;')
@@ -161,7 +166,7 @@ def documentazione_page():
 
 
 async def upload_documento(event, cliente_id, tipo, callback):
-    
+
     if not tipo:
         ui.notify("Seleziona il tipo di documento!", color='negative')
         if callback:
@@ -325,7 +330,7 @@ def _serve_preview_wrapper(preview_id: str):
             <title>{filename}</title>
             <meta name="viewport" content="width=device-width, initial-scale=1">
             <style>
-              html,body{{height:100%;margin:0;background:#111;display:flex;align-items:center;justify-content:center}}
+              html,body{{Height:100%;margin:0;background:#111;display:flex;align-items:center;justify-content:center}}
               img{{max-width:100%;max-height:100vh;object-fit:contain}}
               .controls{{position:fixed;top:10px;right:10px;z-index:999}}
               .btn{{background:#1976d2;color:white;padding:8px 12px;border-radius:6px;text-decoration:none;font-family:Arial}}
@@ -434,3 +439,102 @@ def _preview_documento(doc: dict):
         ui.run_javascript(f"window.open('/__preview/{preview_id}', '_blank');")
     except Exception as e:
         ui.notify(f"Errore apertura nuova scheda: {e}", color='negative')
+
+
+# ----- Nuove funzioni per eliminare documenti -----
+def _confirm_delete_documento(doc: dict, refresh_callback):
+    """
+    Mostra un dialog di conferma; se confermato chiama elimina_documento.
+    """
+    dlg = ui.dialog()
+    with dlg:
+        with ui.card().classes('q-pa-md').style('max-width:420px'):
+            ui.label('Confermi eliminazione documento?').classes('text-h6 q-mb-md')
+            ui.label(f"{doc.get('filename')}").classes('text-caption q-mb-sm')
+            status_lbl = ui.label().classes('text-caption text-negative q-mb-sm')
+
+            def do_delete():
+                try:
+                    success = _elimina_documento_api(doc)
+                    if success:
+                        ui.notify('Documento eliminato', color='positive')
+                        dlg.close()
+                        if callable(refresh_callback):
+                            refresh_callback()
+                    else:
+                        status_lbl.text = 'Errore eliminazione'
+                        ui.notify('Errore eliminazione documento', color='negative')
+                except Exception as e:
+                    status_lbl.text = str(e)
+                    ui.notify(f'Errore eliminazione: {e}', color='negative')
+
+            with ui.row().classes('q-mt-md').style('gap:8px'):
+                ui.button('Elimina', on_click=do_delete).classes('q-pa-md text-negative')
+                ui.button('Annulla', on_click=dlg.close).classes('q-ml-md q-pa-md')
+
+    dlg.open()
+
+
+def _elimina_documento_api(doc: dict) -> bool:
+    """
+    Tenta di eliminare il documento sul backend. Ritorna True se OK.
+
+    Strategie:
+    1) Se il documento è associato a un servizio (doc['servizio_id']) usa la route:
+         DELETE /servizi/{servizio_id}/documenti/{doc_id}
+       (quella che mi hai indicato).
+    2) Altrimenti prova a chiamare l'endpoint documentazione/documenti/{doc_id}
+       (compatibilità con la vecchia API).
+    3) Se api_session fornisce helper usali (delete_documentazione, delete).
+    4) Fallback: requests.delete al backend.
+    """
+    doc_id = doc.get('id')
+    if not doc_id:
+        return False
+
+    # 1) se esiste servizio_id, preferisci la route /servizi/{servizio_id}/documenti/{doc_id}
+    servizio_id = doc.get('servizio_id') or doc.get('servizioId') or doc.get('servizio')
+    if servizio_id is not None:
+        try:
+            # preferisci api_session.delete se disponibile
+            if hasattr(api_session, 'delete'):
+                resp = api_session.delete(f"/servizi/{servizio_id}/documenti/{doc_id}")
+                if getattr(resp, 'status_code', None) in (200, 204):
+                    return True
+            else:
+                headers = api_session.get_headers() if hasattr(api_session, 'get_headers') else {}
+                resp = requests.delete(f"{API_BASE_URL}/servizi/{servizio_id}/documenti/{doc_id}", headers=headers)
+                if resp.status_code in (200, 204):
+                    return True
+        except Exception:
+            pass
+
+    # 2) try documentazione route via api_session helper
+    try:
+        if hasattr(api_session, 'delete_documentazione'):
+            resp = api_session.delete_documentazione(doc_id)
+            if getattr(resp, 'status_code', None) in (200, 204) or isinstance(resp, dict):
+                return True
+    except Exception:
+        pass
+
+    # 3) try generic delete via api_session
+    try:
+        if hasattr(api_session, 'delete'):
+            resp = api_session.delete(f"/documentazione/documenti/{doc_id}")
+            if getattr(resp, 'status_code', None) in (200, 204):
+                return True
+    except Exception:
+        pass
+
+    # 4) fallback to requests.delete
+    try:
+        headers = api_session.get_headers() if hasattr(api_session, 'get_headers') else {}
+        resp = requests.delete(f"{API_BASE_URL}/documentazione/documenti/{doc_id}", headers=headers)
+        if resp.status_code in (200, 204):
+            return True
+    except Exception:
+        pass
+
+    return False
+# ----- Fine aggiunte -----

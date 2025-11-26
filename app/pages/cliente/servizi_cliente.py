@@ -3,6 +3,7 @@ from app.api.api import api_session
 from datetime import datetime
 from typing import Optional
 from dateutil.relativedelta import relativedelta
+import json
 
 # cache servizio_id -> dipendente dict (min info)
 _DIP_CACHE: dict = {}
@@ -36,7 +37,11 @@ def _format_date(date_str: Optional[str], add_months: int = 0) -> str:
     if not date_str:
         return "-"
     try:
-        dt = datetime.fromisoformat(date_str)
+        # compatibilità: alcuni DB possono restituire "YYYY-MM-DD HH:MM:SS" senza 'T'
+        ds = date_str
+        if isinstance(ds, str) and ' ' in ds and 'T' not in ds:
+            ds = ds.replace(' ', 'T')
+        dt = datetime.fromisoformat(ds) if isinstance(ds, str) else ds
         if add_months:
             dt += relativedelta(months=+add_months)
         if dt.time().hour == 0 and dt.time().minute == 0 and dt.time().second == 0:
@@ -54,38 +59,32 @@ _COLOR_MAP = {
 }
 
 def _is_archived_or_deleted(item: dict) -> bool:
-    """Return True if the given dict represents an archived/deleted service.
+    """
+    Return True se il dizionario rappresenta un servizio archiviato/cancellato.
 
-    This covers multiple possible field names and value types:
-    - boolean fields: archived, is_archived, is_deleted, deleted, archiviato, is_archiviato
-    - string fields: 'true','1','yes' or textual states like 'archiviato','archived'
+    Controlla solo campi espliciti di archivio/cancellazione (nomi comuni).
+    Non inferisce lo stato da 'stato' o 'statoServizio' per evitare falsi positivi.
     """
     if not isinstance(item, dict):
         return False
 
-    # candidate values to consider
-    candidates = (
-        item.get('archived'),
-        item.get('archiviato'),
-        item.get('is_archived'),
-        item.get('is_archiviato'),
-        item.get('is_deleted'),
-        item.get('deleted'),
-        item.get('stato'),
-        item.get('statoServizio'),
-        item.get('status'),
+    # Chiavi esplicite che consideriamo come indicatori di archivio/cancellazione
+    marker_keys = (
+        'archived', 'archiviato', 'is_archived', 'is_archiviato',
+        'is_deleted', 'deleted', 'cancellato', 'cancellata'
     )
 
-    for v in candidates:
+    for k in marker_keys:
+        v = item.get(k)
         if v is None:
             continue
-        # if it's a boolean-like
+        # booleano
         if isinstance(v, bool):
             if v:
                 return True
             else:
                 continue
-        # if numeric-like (0/1)
+        # numerico (0/1)
         if isinstance(v, (int, float)):
             try:
                 if int(v) != 0:
@@ -93,20 +92,17 @@ def _is_archived_or_deleted(item: dict) -> bool:
             except Exception:
                 pass
             continue
-        # if string-like
+        # stringa
         try:
             s = str(v).strip().lower()
         except Exception:
             continue
         if s in ('1', 'true', 'yes', 't', 'y'):
             return True
-        # check common textual markers
         if s in ('archiviato', 'archiviata', 'archiviati', 'archivio', 'archived', 'deleted', 'cancellato', 'cancellata'):
             return True
-        # sometimes stato fields may be full words like 'IN_ATTESA_APPROVAZIONE' etc.
-        if 'archiv' in s or 'delete' in s or 'cancell' in s:
-            return True
 
+    # Non consideriamo qui campi generici come 'stato' o 'statoServizio'
     return False
 
 def servizi_cliente_approvati_page(cliente_id: int):
@@ -126,12 +122,15 @@ def servizi_cliente_approvati_page(cliente_id: int):
     letter-spacing: 0.5px !important;
     height:20px;
 }
+.debug-card {
+    background:#fff8e1; border-radius:8px; padding:8px; margin-bottom:8px; font-family:monospace; white-space:pre-wrap;
+}
 </style>
     """)
     """Pagina per visualizzare tutti i servizi APPROVATI di un cliente (UI più curata)"""
 
     def _go_home(cid: int = cliente_id):
-        
+
         user = getattr(api_session, 'user', None)
         try:
             if user and hasattr(api_session, 'get_dipendente_id_by_user'):
@@ -195,8 +194,19 @@ def servizi_cliente_approvati_page(cliente_id: int):
             ui.label("Impossibile caricare i servizi approvati").classes('text-negative q-mt-md')
             return
 
+        # --- DEBUG: mostra info per capire perché alcuni servizi vengono filtrati ---
+        debug_lines = []
+        debug_lines.append(f"received {len(servizi or [])} services from API\n")
+        # build a short diagnostics string per ogni servizio
+        for s in (servizi or []):
+            sid = s.get('id')
+            archived_vals = {k: s.get(k) for k in ('archived','archiviato','is_archived','is_archiviato',
+                                                   'is_deleted','deleted','cancellato','cancellata')}
+            debug_lines.append(f"id={sid} statoServizio={s.get('statoServizio')} archived_flags={archived_vals}")
         # filter out archived/deleted services (robust to different backend field names)
-        servizi = [s for s in (servizi or []) if not _is_archived_or_deleted(s)]
+        # NOTE: temporarily disabling the filter below can help to verify whether the problem is the filter.
+        # servizi = [s for s in (servizi or []) if not _is_archived_or_deleted(s)]
+        servizi = servizi or []
 
         if not servizi:
             ui.label("Nessun servizio approvato trovato.").classes('text-grey-7 q-mt-md')
@@ -210,8 +220,8 @@ def servizi_cliente_approvati_page(cliente_id: int):
 
             # formattazione date
             data_richiesta = _format_date(servizio.get('dataRichiesta'))
-            # Data consegna +3 mesi
-            data_consegna = _format_date(servizio.get('dataConsegna'), add_months=3)
+            # Data consegna (mostra il valore così com'è, senza aggiungere mesi)
+            data_consegna = _format_date(servizio.get('dataConsegna'))
 
             # colore badge stato
             stato_lower = str(stato).lower()
@@ -242,14 +252,14 @@ def servizi_cliente_approvati_page(cliente_id: int):
                         ui.label(tipo).classes('text-h6').style('margin-right:12px;font-weight:700')
                         ui.label(codice).classes('text-h6').style('margin-right:12px;font-weight:700')
                         ui.label(stato).classes('text-h6').style('margin-right:12px;font-weight:700')
-                        
+
                 # Meta: date e codice interno
                 with ui.row().classes('q-mt-sm q-mb-sm').style('gap:24px'):
                     with ui.column().style('min-width:220px'):
                         ui.label('Data richiesta').classes('text-caption text-grey-6')
                         ui.label(data_richiesta).classes('text-body2')
                     with ui.column().style('min-width:220px'):
-                        ui.label('Data consegna (+3 mesi)').classes('text-caption text-grey-6')
+                        ui.label('Data consegna').classes('text-caption text-grey-6')
                         ui.label(data_consegna).classes('text-body2')
                     with ui.column().style('flex:1'):
                         ui.label('Codice interno').classes('text-caption text-grey-6')

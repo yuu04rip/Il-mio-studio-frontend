@@ -130,7 +130,38 @@ def clienti_page_dipendente():
 
             # tenta di recuperare dipendente_id (utile per la creazione del servizio e per mostrare azioni)
             try:
-                dipendente_id = api_session.get_dipendente_id_by_user(user['id']) if user and user.get('id') else None
+                # api_session.get_dipendente_id_by_user può restituire direttamente un int oppure una Response-like
+                dipendente_id = None
+                if user and user.get('id'):
+                    resp = api_session.get_dipendente_id_by_user(user['id'])
+                    # gestione difensiva: se è un dict/number o response-like
+                    try:
+                        if isinstance(resp, dict):
+                            dipendente_id = resp.get('id') or resp.get('dipendente_id') or resp.get('result')
+                        elif isinstance(resp, int):
+                            dipendente_id = resp
+                        elif hasattr(resp, 'status_code') and getattr(resp, 'status_code') in (200, 201):
+                            try:
+                                body = resp.json()
+                                # endpoint restituisce int or {"id": int}
+                                if isinstance(body, dict):
+                                    dipendente_id = body.get('id') or body.get('dipendente_id') or body.get('result')
+                                elif isinstance(body, int):
+                                    dipendente_id = body
+                            except Exception:
+                                # potrebbe essere un intero raw
+                                try:
+                                    dipendente_id = int(resp.text)
+                                except Exception:
+                                    dipendente_id = None
+                        else:
+                            # fallback: se la funzione restituisce direttamente un int
+                            try:
+                                dipendente_id = int(resp)
+                            except Exception:
+                                dipendente_id = None
+                    except Exception:
+                        dipendente_id = None
                 print('[DEBUG] dipendente_id risolto:', dipendente_id)
             except Exception as e:
                 dipendente_id = None
@@ -185,12 +216,23 @@ def clienti_page_dipendente():
                                   'dipendente_id=', dipendente_id)
 
                             # chiamata API: passiamo esplicitamente anche dipendente_id
-                            res = api_session.crea_servizio(
-                                cliente_for_nav,
-                                tipo_input.value,
-                                codice_corrente=codice_val,
-                                dipendente_id=dipendente_id,
-                            )
+                            # usiamo l'helper creato nel client api_session; se non disponibile fallback a post
+                            try:
+                                res = api_session.crea_servizio(
+                                    cliente_for_nav,
+                                    tipo_input.value,
+                                    codice_corrente=codice_val,
+                                    dipendente_id=dipendente_id,
+                                )
+                            except Exception:
+                                # fallback: invio payload esplicito al POST /studio/servizi
+                                payload = {
+                                    "cliente_id": cliente_for_nav,
+                                    "tipo": tipo_input.value,
+                                    "codiceCorrente": codice_val,
+                                    "dipendente_id": dipendente_id,
+                                }
+                                res = api_session.post('/studio/servizi', json=payload)
 
                             # debug / log risposta
                             try:
@@ -206,8 +248,16 @@ def clienti_page_dipendente():
                             try:
                                 if isinstance(res, dict):
                                     created_obj = res
+                                elif hasattr(res, 'status_code') and getattr(res, 'status_code') in (200, 201):
+                                    try:
+                                        created_obj = res.json()
+                                    except Exception:
+                                        created_obj = None
                                 elif hasattr(res, 'json'):
-                                    created_obj = res.json()
+                                    try:
+                                        created_obj = res.json()
+                                    except Exception:
+                                        created_obj = None
                                 if created_obj:
                                     created_id = created_obj.get('id')
                                 print('[DEBUG] created_id:', created_id, 'created_obj:', created_obj)
@@ -229,6 +279,12 @@ def clienti_page_dipendente():
                                 ui.notify(f'Servizio creato! Codice: {codice_generato}', color='positive')
                             else:
                                 ui.notify('Servizio creato!', color='positive')
+
+                            # IMPORTANT: ricarica i clienti così la UI aggiorna "Personali"
+                            try:
+                                carica_clienti()
+                            except Exception as e:
+                                print('[DEBUG] errore carica_clienti dopo creazione:', e)
 
                             # pulizia campi
                             tipo_input.value = None
@@ -294,10 +350,27 @@ def clienti_page_dipendente():
 
     def inizializza_servizio_ui(servizio_id: int, carica_callback=None):
         try:
-            api_session.inizializza_servizio(servizio_id)
-            ui.notify("Servizio inizializzato!", color="positive")
-            if carica_callback:
-                carica_callback()
+            res = api_session.inizializza_servizio(servizio_id)
+            # gestione difensiva: se response-like, controlla code
+            ok = False
+            try:
+                if hasattr(res, 'status_code'):
+                    ok = getattr(res, 'status_code') in (200, 201)
+                elif isinstance(res, dict):
+                    ok = True
+            except Exception:
+                ok = True
+            if ok:
+                ui.notify("Servizio inizializzato!", color="positive")
+                # ricarica clienti e servizi
+                if carica_callback:
+                    carica_callback()
+                try:
+                    carica_clienti()
+                except Exception:
+                    pass
+            else:
+                ui.notify("Errore inizializzazione servizio", color="negative")
         except Exception as e:
             ui.notify(f"Errore inizializzazione: {e}", color="negative")
             print('[DEBUG] errore inizializza_servizio_ui:', e)

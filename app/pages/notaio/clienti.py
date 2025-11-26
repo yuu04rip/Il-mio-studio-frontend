@@ -187,42 +187,63 @@ def clienti_page():
                     try:
                         cliente_for_nav = int(selected_cliente['id'])
 
-                        # 1) crea servizio come fa il dipendente (codici gestiti dal backend)
-                        res = api_session.crea_servizio(
-                            cliente_for_nav,
-                            tipo_input.value,
-                            codice_corrente=codice_val,
-                            dipendente_id=None,  # il notaio non è dipendente tecnico; puoi lasciare None
-                        )
+                        # 1) crea servizio come fa il notaio (codici gestiti dal backend)
+                        # utilizziamo gestione difensiva sulla risposta dell'API (può essere dict o response-like)
+                        try:
+                            res = api_session.crea_servizio(
+                                cliente_for_nav,
+                                tipo_input.value,
+                                codice_corrente=codice_val,
+                                dipendente_id=None,  # il notaio non è dipendente tecnico
+                            )
+                        except Exception:
+                            payload = {
+                                "cliente_id": cliente_for_nav,
+                                "tipo": tipo_input.value,
+                                "codiceCorrente": codice_val,
+                                "dipendente_id": None,
+                            }
+                            res = api_session.post('/studio/servizi', json=payload)
 
                         # parsing difensivo della risposta create
                         created_obj = None
                         created_id = None
-                        if isinstance(res, dict):
-                            created_obj = res
-                        elif hasattr(res, 'json'):
-                            try:
-                                created_obj = res.json()
-                            except Exception:
-                                created_obj = None
+                        try:
+                            if isinstance(res, dict):
+                                created_obj = res
+                            elif hasattr(res, 'status_code') and getattr(res, 'status_code') in (200, 201):
+                                try:
+                                    created_obj = res.json()
+                                except Exception:
+                                    created_obj = None
+                            elif hasattr(res, 'json'):
+                                try:
+                                    created_obj = res.json()
+                                except Exception:
+                                    created_obj = None
+                        except Exception:
+                            created_obj = None
+
                         if created_obj:
                             created_id = created_obj.get('id')
 
-                        # 2) imposta subito stato APPROVATO (controllo difensivo)
+                        # 2) imposta subito stato APPROVATO (notaio) — gestione difensiva sulla risposta
                         if created_id is not None:
-                            patch_resp = api_session.patch(
-                                f"/studio/servizi/{created_id}",
-                                {"statoServizio": "APPROVATO"},
-                            )
-                            if getattr(patch_resp, 'status_code', None) != 200:
-                                text = getattr(patch_resp, 'text', None)
-                                try:
-                                    if text is None and hasattr(patch_resp, 'json'):
-                                        text = patch_resp.json()
-                                except Exception:
-                                    text = str(patch_resp)
-                                crea_msg.text = f"Servizio creato ma errore nel set stato APPROVATO: {text}"
-                                return
+                            try:
+                                patch_resp = api_session.patch(f"/studio/servizi/{created_id}", {"statoServizio": "APPROVATO"})
+                                if getattr(patch_resp, 'status_code', None) not in (200, 201, None):
+                                    # prova a leggere body per messaggio d'errore
+                                    text = getattr(patch_resp, 'text', None)
+                                    try:
+                                        if text is None and hasattr(patch_resp, 'json'):
+                                            text = patch_resp.json()
+                                    except Exception:
+                                        text = str(patch_resp)
+                                    crea_msg.text = f"Servizio creato ma errore nel set stato APPROVATO: {text}"
+                                    # comunque proseguiamo: mostriamo servizio e ricarichiamo lista
+                            except Exception as e:
+                                # non blocchiamo l'utente, ma mostriamo notifica
+                                print('[DEBUG] errore patch APPROVATO:', e)
 
                         # estrai codice per notifica
                         codice_generato = None
@@ -236,6 +257,12 @@ def clienti_page():
                             ui.notify(f'Servizio creato e approvato! Codice: {codice_generato}', color='positive')
                         else:
                             ui.notify('Servizio creato e approvato!', color='positive')
+
+                        # IMPORTANT: ricarica i clienti così la UI è aggiornata
+                        try:
+                            carica_clienti()
+                        except Exception as e:
+                            print('[DEBUG] errore carica_clienti dopo creazione:', e)
 
                         # pulizia campi
                         tipo_input.value = None
@@ -256,6 +283,7 @@ def clienti_page():
                     except Exception as e:
                         crea_msg.text = f'Errore: {e}'
                         ui.notify(f'Errore creazione servizio: {e}', color='negative')
+                        print('[DEBUG] eccezione submit_crea notaio:', e)
 
                 with ui.row().classes('q-mt-md').style('align-items:center;width:100%;justify-content:center;'):
                     ui.button('Crea', on_click=submit_crea).classes('custom-button-blue-light-panels')

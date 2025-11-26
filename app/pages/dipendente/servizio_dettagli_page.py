@@ -2,7 +2,6 @@ from nicegui import ui
 from app.api.api import api_session
 from app.models.servizio import Servizio
 from datetime import datetime
-from dateutil.relativedelta import relativedelta
 
 
 def get_icon_for_stato(stato):
@@ -131,7 +130,7 @@ def servizio_dettagli_page(id: str = None):
                             'RIFIUTATO': 'text-red',
                             'CONSEGNATO': 'text-purple',
                         }.get(servizio.statoServizio, 'text-grey')
-                    
+
                         ui.label(servizio.statoServizio).classes('text-body1')
 
                 with ui.column():
@@ -151,15 +150,14 @@ def servizio_dettagli_page(id: str = None):
 
                     ui.label(data_richiesta_str).classes('text-body1')
 
-                    # Data Consegna +3 mesi
+                    # Data Consegna (mostra il valore così com'è, senza aggiungere 3 mesi)
                     ui.label('Data Consegna:').classes('text-weight-bold q-mt-md')
                     try:
                         if isinstance(servizio.dataConsegna, str):
                             data_consegna_dt = datetime.fromisoformat(servizio.dataConsegna)
                         else:
                             data_consegna_dt = servizio.dataConsegna
-                        data_consegna_plus3 = data_consegna_dt + relativedelta(months=+3)
-                        data_consegna_str = data_consegna_plus3.strftime('%d/%m/%Y %H:%M')
+                        data_consegna_str = data_consegna_dt.strftime('%d/%m/%Y %H:%M')
                     except Exception:
                         data_consegna_str = servizio.dataConsegna
 
