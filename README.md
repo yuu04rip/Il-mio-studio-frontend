@@ -149,7 +149,13 @@ Dopo l’avvio:
 - Apri il browser su [http://localhost:8080](http://localhost:8080) oppure sulla porta indicata in console (dipende dalla configurazione di NiceGUI / FastAPI).
 
 ---
+| Ruolo      | Email                                               | Password        | Note aggiuntive                |
+| ---------- | --------------------------------------------------- | --------------- | ------------------------------ |
+| Dipendente | [dipendente@gmail.com](mailto:dipendente@gmail.com) | le0p0ld0        |                                |
+| Notaio     | [notaio3@studio.it](mailto:notaio3@studio.it)       | password_sicura | codice notarile: 1000          |
+| Cliente    | [cliente@gmail.com](mailto:cliente@gmail.com)       | le0p0ld0        |                                |
 
+---
 ## 🧪 Come testare velocemente che tutto funzioni
 
 1. Verifica che l’app si avvii senza errori nel terminale.
